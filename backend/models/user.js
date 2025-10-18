@@ -1,17 +1,12 @@
-// backend/models/User.js
 const mongoose = require("mongoose");
 
-// ✅ Định nghĩa schema cho User
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    age: { type: Number, required: true },
+    name: { type: String, required: [true, "Tên là bắt buộc"] },
+    email: { type: String, required: [true, "Email là bắt buộc"] },
+    age: { type: Number, required: [true, "Tuổi là bắt buộc"] },
   },
-  {
-    timestamps: true, // Tự tạo createdAt / updatedAt
-  }
+  { timestamps: true }
 );
 
-// ✅ Xuất model "User" để dùng trong routes
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.models.User || mongoose.model("User", userSchema);

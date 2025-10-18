@@ -1,79 +1,94 @@
-// backend/routes/user.js
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const User = require("../models/user"); // ✅ Đảm bảo file models/user.js tồn tại
+const User = require('../models/User');
 
-// 🟢 [GET] Lấy toàn bộ user từ MongoDB
-router.get("/", async (req, res) => {
+// Lấy danh sách user
+router.get('/', async (req, res) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 }); // sắp xếp mới nhất trước
+    const users = await User.find().sort({ createdAt: -1 });
     res.json(users);
-  } catch (error) {
-    console.error("❌ Lỗi khi lấy danh sách user:", error);
-    res.status(500).json({ message: "Lỗi server khi lấy user" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// 🟢 [POST] Thêm user mới vào MongoDB
-router.post("/", async (req, res) => {
+// Thêm user mới
+router.post('/', async (req, res) => {
   try {
-    console.log("📥 Nhận user mới:", req.body);
+    console.log("📩 Dữ liệu nhận từ client:", req.body);
+
     const { name, email, age } = req.body;
 
     if (!name || !email) {
-      return res.status(400).json({ message: "Thiếu tên hoặc email!" });
+      return res.status(400).json({ message: 'name và email là bắt buộc' });
     }
 
-    const newUser = new User({ name, email, age });
-    await newUser.save();
+    // Ép kiểu age và kiểm tra
+    const ageNum = (age === "" || age === undefined || age === null) ? undefined : Number(age);
+    if (ageNum === undefined || Number.isNaN(ageNum)) {
+      return res.status(400).json({ message: 'Tuổi là bắt buộc và phải là số' });
+    }
 
-    console.log("✅ User mới đã lưu:", newUser);
-    res.status(201).json(newUser);
-  } catch (error) {
-    console.error("❌ Lỗi khi thêm user:", error);
-    res.status(500).json({ message: "Lỗi server khi thêm user" });
+    const newUser = new User({ name, email, age: ageNum });
+    const savedUser = await newUser.save(); // ✅ Lưu vào MongoDB
+    res.status(201).json(savedUser);        // ✅ Trả về document
+  } catch (err) {
+    console.error("Lỗi khi thêm user:", err);
+    // trả lỗi chi tiết nếu là validation error
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message, errors: err.errors });
+    }
+    res.status(500).json({ message: err.message });
   }
 });
-
-// 🟠 [PUT] Cập nhật thông tin user theo ID
-router.put("/:id", async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
+    console.log('📩 PUT /users/:id params:', req.params);
+    console.log('📩 PUT /users/:id body:', req.body);
+
     const { id } = req.params;
-    const updateData = req.body;
+    const { name, email, age } = req.body;
 
-    console.log(`✏️ Cập nhật user ID: ${id}`, updateData);
-
-    const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
-    if (!updatedUser) {
-      return res.status(404).json({ message: "Không tìm thấy user để cập nhật!" });
+    if (!name || !email) {
+      return res.status(400).json({ message: 'name và email là bắt buộc' });
     }
 
-    console.log("✅ User sau khi cập nhật:", updatedUser);
-    res.json(updatedUser);
-  } catch (error) {
-    console.error("❌ Lỗi khi cập nhật user:", error);
-    res.status(500).json({ message: "Lỗi server khi cập nhật user" });
+    const ageNum = (age === "" || age === undefined || age === null) ? undefined : Number(age);
+    if (ageNum === undefined || Number.isNaN(ageNum)) {
+      return res.status(400).json({ message: 'Tuổi là bắt buộc và phải là số' });
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      id,
+      { name, email, age: ageNum },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) return res.status(404).json({ message: 'User không tồn tại' });
+    return res.json({ message: 'Cập nhật thành công', user: updated });
+  } catch (err) {
+    console.error('Lỗi khi cập nhật user:', err);
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message, errors: err.errors });
+    }
+    res.status(500).json({ message: err.message });
   }
 });
 
-// 🔴 [DELETE] Xóa user theo ID
-router.delete("/:id", async (req, res) => {
+// Xóa user theo id
+router.delete('/:id', async (req, res) => {
   try {
+    console.log('📩 DELETE /users/:id params:', req.params); // debug xem id
     const { id } = req.params;
-
-    console.log(`🗑️ Xóa user ID: ${id}`);
-
-    const deletedUser = await User.findByIdAndDelete(id);
-    if (!deletedUser) {
-      return res.status(404).json({ message: "Không tìm thấy user để xóa!" });
-    }
-
-    console.log("✅ Đã xóa user:", deletedUser);
-    res.json({ message: "User đã được xóa thành công!", deletedUser });
-  } catch (error) {
-    console.error("❌ Lỗi khi xóa user:", error);
-    res.status(500).json({ message: "Lỗi server khi xóa user" });
+    const deleted = await User.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: 'User không tồn tại' });
+    return res.json({ message: 'Xóa thành công', user: deleted });
+  } catch (err) {
+    console.error('Lỗi khi xóa user:', err);
+    res.status(500).json({ message: err.message });
   }
-});
+  
+}
+);
 
 module.exports = router;
