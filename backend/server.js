@@ -1,47 +1,46 @@
-// 📦 Import các module cần thiết
+// 📁 backend/server.js
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-require("dotenv").config(); // Đọc file .env
+require("dotenv").config();
 
 const app = express();
 
-// 🟢 Cấu hình CORS - cho phép frontend truy cập API từ mọi máy
+// ✅ Cấu hình CORS — chỉ cho phép truy cập từ frontend React
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      "http://localhost:3001",     // frontend chạy trên cùng máy
+      "http://192.168.1.7:3001",   // nếu frontend chạy trên máy khác cùng LAN
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type"],
-    credentials: true,
   })
 );
 
-// 🟢 Cho phép đọc JSON từ body request
+// ✅ Cho phép đọc JSON từ body request
 app.use(express.json());
 
-// 🟢 Kết nối MongoDB Atlas
+// ✅ Kết nối MongoDB Atlas
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000, // ⏱ tránh treo nếu Atlas chậm
   })
-  .then(() => {
-    console.log("✅ Kết nối MongoDB Atlas thành công!");
-  })
-  .catch((err) => {
-    console.error("❌ Lỗi kết nối MongoDB Atlas:", err.message);
-  });
+  .then(() => console.log("✅ Kết nối MongoDB thành công"))
+  .catch((err) => console.error("❌ MongoDB lỗi:", err.message));
 
-// 🟢 Import và dùng route cho User
+// ✅ Import và dùng router User
 const userRouter = require("./routes/user");
-app.use("/users", userRouter);
+app.use("/users", userRouter); // <-- Đường dẫn đúng cho frontend gọi /users
 
-// 🟢 Khởi động server (cho phép các máy trong cùng mạng LAN truy cập)
+// ✅ Route test (để kiểm tra nhanh backend có hoạt động)
+app.get("/", (req, res) => {
+  res.send("🚀 Backend đang hoạt động!");
+});
+
+// ✅ Khởi động server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("==============================================");
-  console.log(`🚀 Backend đang chạy tại: http://localhost:${PORT}`);
-  console.log("🌍 Cho phép truy cập từ mọi thiết bị trong mạng LAN");
-  console.log("==============================================");
+  console.log(`🚀 Backend chạy tại: http://192.168.1.7:${PORT}`);
 });
