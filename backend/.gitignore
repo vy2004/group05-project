@@ -1,0 +1,7 @@
+# 🚫 Bỏ qua thư mục node_modules (thư viện cài bằng npm)
+node_modules/
+
+# Ngoài ra nên thêm thêm vài dòng bảo vệ:
+.env
+dist/
+.DS_Store
