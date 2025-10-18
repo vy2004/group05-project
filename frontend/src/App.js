@@ -1,21 +1,27 @@
-// 📁 src/App.js
+// 📁 src/App.jsx
 import { useState } from "react";
 import AddUser from "./components/AddUser";
 import UserList from "./components/UserList";
+import "./App.css";
 
 function App() {
-  const [reloadFlag, setReloadFlag] = useState(false);
+  // 🧠 State dùng làm "tín hiệu" reload danh sách user
+  const [reloadSignal, setReloadSignal] = useState(false);
 
-  // 🔁 Khi thêm user thành công -> đổi flag để UserList tự load lại
+  // 🔁 Khi thêm user thành công → đảo trạng thái reloadSignal để UserList re-render
   const handleUserAdded = () => {
-    setReloadFlag((prev) => !prev);
+    setReloadSignal((prev) => !prev);
   };
 
   return (
     <div style={{ padding: 20 }}>
       <h1>📚 Quản lý User (Frontend React + MongoDB)</h1>
+
+      {/* 🧩 Form thêm user (truyền callback để báo cho App biết khi thêm user mới) */}
       <AddUser onUserAdded={handleUserAdded} />
-      <UserList reloadFlag={reloadFlag} />
+
+      {/* 🧩 Danh sách user (tự reload mỗi khi reloadSignal thay đổi) */}
+      <UserList fetchUsersSignal={reloadSignal} />
     </div>
   );
 }
