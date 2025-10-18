@@ -90,5 +90,23 @@ router.delete('/:id', async (req, res) => {
   
 }
 );
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params; // Lấy id từ URL
+    const updatedUser = await User.findByIdAndUpdate(id, req.body, {
+      new: true, // Trả về document sau khi cập nhật
+    });
 
+    if (!updatedUser) {
+      return res.status(404).json({ message: "Không tìm thấy user!" });
+    }
+
+    res.json({
+      message: "Cập nhật user thành công!",
+      user: updatedUser,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;
