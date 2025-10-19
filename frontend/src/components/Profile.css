@@ -1,4 +1,9 @@
 /* Profile.css */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .profile-container {
   max-width: 1000px;
   margin: 0 auto;

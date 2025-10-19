@@ -6,20 +6,72 @@ const Profile = ({ currentUser, onUserUpdate }) => {
   const [user, setUser] = useState(currentUser);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState(null);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     age: user?.age || ''
   });
 
+  // Auto-load profile data when component mounts
   useEffect(() => {
-    setUser(currentUser);
+    const loadProfileData = async () => {
+      try {
+        setProfileLoading(true);
+        const response = await api.get('/profile');
+        const profileData = response.data.user;
+        
+        // Update state with fresh data
+        setUser(profileData);
+        setFormData({
+          name: profileData?.name || '',
+          email: profileData?.email || '',
+          age: profileData?.age || ''
+        });
+        
+        // Update localStorage with fresh data
+        localStorage.setItem('current_user', JSON.stringify(profileData));
+        
+        // Notify parent component
+        if (onUserUpdate) {
+          onUserUpdate(profileData);
+        }
+      } catch (error) {
+        console.error('Lỗi khi load profile data:', error);
+        setProfileError(error.response?.data?.message || 'Không thể tải thông tin profile');
+        
+        // Fallback to currentUser if API fails
+        if (currentUser) {
+          setUser(currentUser);
+          setFormData({
+            name: currentUser?.name || '',
+            email: currentUser?.email || '',
+            age: currentUser?.age || ''
+          });
+        }
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    // Only load if we have a token (user is logged in)
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      loadProfileData();
+    } else {
+      setProfileLoading(false);
+    }
+  }, []); // Empty dependency array - only run once on mount
+
+  useEffect(() => {
+    // Update form data when user changes (for editing mode)
     setFormData({
-      name: currentUser?.name || '',
-      email: currentUser?.email || '',
-      age: currentUser?.age || ''
+      name: user?.name || '',
+      email: user?.email || '',
+      age: user?.age || ''
     });
-  }, [currentUser]);
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -71,18 +123,126 @@ const Profile = ({ currentUser, onUserUpdate }) => {
     return new Date(dateString).toLocaleString('vi-VN');
   };
 
+  // Show loading state while fetching profile data
+  if (profileLoading) {
+    return (
+      <div className="profile-container">
+        <div className="profile-header">
+          <h1>👤 Hồ Sơ Cá Nhân</h1>
+          <p>Quản lý thông tin tài khoản của bạn</p>
+        </div>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '400px',
+          background: 'white',
+          borderRadius: '15px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              fontSize: '2rem', 
+              marginBottom: '20px',
+              animation: 'spin 1s linear infinite'
+            }}>
+              ⏳
+            </div>
+            <p style={{ fontSize: '1.1rem', color: '#666' }}>
+              Đang tải thông tin profile...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if profile loading failed
+  if (profileError && !user) {
+    return (
+      <div className="profile-container">
+        <div className="profile-header">
+          <h1>👤 Hồ Sơ Cá Nhân</h1>
+          <p>Quản lý thông tin tài khoản của bạn</p>
+        </div>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '400px',
+          background: 'white',
+          borderRadius: '15px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              fontSize: '3rem', 
+              marginBottom: '20px',
+              color: '#e74c3c'
+            }}>
+              ❌
+            </div>
+            <p style={{ fontSize: '1.1rem', color: '#e74c3c', marginBottom: '20px' }}>
+              {profileError}
+            </p>
+            <button 
+              onClick={() => window.location.reload()} 
+              style={{
+                padding: '10px 20px',
+                background: '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}
+            >
+              🔄 Thử lại
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="profile-container">
       <div className="profile-header">
         <h1>👤 Hồ Sơ Cá Nhân</h1>
         <p>Quản lý thông tin tài khoản của bạn</p>
+        {profileError && (
+          <div style={{
+            background: '#fff3cd',
+            border: '1px solid #ffeaa7',
+            color: '#856404',
+            padding: '10px 15px',
+            borderRadius: '5px',
+            marginTop: '15px',
+            fontSize: '0.9rem'
+          }}>
+            ⚠️ Không thể tải dữ liệu mới nhất: {profileError}. Đang hiển thị dữ liệu đã lưu.
+          </div>
+        )}
       </div>
 
       <div className="profile-content">
         <div className="profile-card">
           <div className="profile-avatar">
             <div className="avatar-circle">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt="Avatar" 
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                user?.name ? user.name.charAt(0).toUpperCase() : 'U'
+              )}
             </div>
             <div className="role-badge">
               {user?.role === 'admin' ? '👑 Admin' : '👤 User'}
@@ -115,6 +275,10 @@ const Profile = ({ currentUser, onUserUpdate }) => {
 
               <div className="info-section">
                 <h3>Thông tin tài khoản</h3>
+                <div className="info-item">
+                  <label>Avatar:</label>
+                  <span>{user?.avatar ? '✅ Đã cập nhật' : '❌ Chưa cập nhật'}</span>
+                </div>
                 <div className="info-item">
                   <label>ID:</label>
                   <span className="user-id">{user?.id || user?._id}</span>

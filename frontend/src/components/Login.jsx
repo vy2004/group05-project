@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import api from '../services/api';
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onForgotPassword }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -74,7 +74,24 @@ export default function Login({ onLogin }) {
       </button>
       {!loading && (
         <div style={{ marginTop: 12, textAlign: 'center', color: '#6c757d', fontSize: '0.9em' }}>
-          Vui lòng đăng nhập để tiếp tục.
+          <div>Vui lòng đăng nhập để tiếp tục.</div>
+          {onForgotPassword && (
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#007bff',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontSize: '0.9em',
+                marginTop: '8px'
+              }}
+            >
+              🔐 Quên mật khẩu?
+            </button>
+          )}
         </div>
       )}
     </form>

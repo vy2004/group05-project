@@ -22,7 +22,15 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     console.error("API error:", err?.response || err?.message);
-    alert("Không thể kết nối tới backend. Kiểm tra server!");
+    
+    // Nếu là lỗi 401, clear token và redirect về login
+    if (err?.response?.status === 401) {
+      console.log("🔐 Token expired, clearing storage...");
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('current_user');
+      // Không hiển thị alert để tránh spam
+    }
+    
     return Promise.reject(err);
   }
 );
@@ -63,6 +71,54 @@ export const deleteUser = async (id) => {
     return res.data;
   } catch (err) {
     console.error("Error deleting user:", err);
+    throw err;
+  }
+};
+
+// API cho quên mật khẩu
+export const forgotPassword = async (email) => {
+  try {
+    const res = await api.post('/password/forgot', { email });
+    return res.data;
+  } catch (err) {
+    console.error("Error sending forgot password:", err);
+    throw err;
+  }
+};
+
+// API cho reset mật khẩu
+export const resetPassword = async (token, newPassword) => {
+  try {
+    const res = await api.post('/password/reset', { token, newPassword });
+    return res.data;
+  } catch (err) {
+    console.error("Error resetting password:", err);
+    throw err;
+  }
+};
+
+// API cho upload avatar
+export const uploadAvatar = async (formData) => {
+  try {
+    const res = await api.post('/avatar/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error uploading avatar:", err);
+    throw err;
+  }
+};
+
+// API cho xóa avatar
+export const removeAvatar = async () => {
+  try {
+    const res = await api.delete('/avatar/remove');
+    return res.data;
+  } catch (err) {
+    console.error("Error removing avatar:", err);
     throw err;
   }
 };
