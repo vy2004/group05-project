@@ -12,12 +12,14 @@ export default function Login({ onLogin }) {
     try {
       const res = await api.post('/auth/login', { email, password });
       const token = res.data?.token;
-      if (token) {
+      const user = res.data?.user;
+      if (token && user) {
         localStorage.setItem('jwt_token', token);
-        alert('Đăng nhập thành công. Token đã được lưu trong localStorage.');
-        if (onLogin) onLogin({ token, user: res.data.user });
+        localStorage.setItem('current_user', JSON.stringify(user));
+        alert('Đăng nhập thành công!');
+        if (onLogin) onLogin({ token, user });
       } else {
-        alert('Không nhận được token từ server');
+        alert('Không nhận được token hoặc thông tin user từ server');
       }
     } catch (err) {
       console.error('Login failed', err);
