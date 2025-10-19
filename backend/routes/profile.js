@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { xacThuc } = require('../middleware/auth');
 const profileController = require('../controllers/profileController');
 
 // @route   GET /profile
 // @desc    Get user profile
 // @access  Private
-router.get('/', auth, profileController.getProfile);
+router.get('/', xacThuc, profileController.getProfile);
 
 // @route   PUT /profile
 // @desc    Update user profile
 // @access  Private
-router.put('/', auth, profileController.updateProfile);
+router.put('/', xacThuc, profileController.updateProfile);
 
 module.exports = router;

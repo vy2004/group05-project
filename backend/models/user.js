@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: [true, "Mật khẩu là bắt buộc"] },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     age: { type: Number },
+    avatar: { type: String, default: "" },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );

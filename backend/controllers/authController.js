@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_change_me';
+const JWT_SECRET = process.env.JWT_SECRET || 'group05-super-secret-jwt-key-2024';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 
 // POST /auth/signup
@@ -46,10 +46,20 @@ const login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
 
-    const payload = { id: user._id, email: user.email, role: user.role };
+    const payload = { userId: user._id, email: user.email, role: user.role };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-    res.json({ message: 'Đăng nhập thành công', token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.json({ 
+      message: 'Đăng nhập thành công', 
+      token, 
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        role: user.role,
+        age: user.age
+      } 
+    });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: err.message });
