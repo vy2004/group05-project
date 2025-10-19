@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const userRoutes = require("./routes/user");
 const authRoutes = require("./routes/auth");
+const profileRoutes = require("./routes/profile");
 
 dotenv.config();
 const app = express();
@@ -34,6 +35,8 @@ mongoose
 app.use("/users", userRoutes);
 // ✅ Dùng routes/auth.js cho authentication
 app.use("/auth", authRoutes);
+// ✅ Dùng routes/profile.js cho quản lý profile
+app.use("/profile", profileRoutes);
 
 // ✅ Khởi động backend server
 const PORT = process.env.PORT || 3000;
