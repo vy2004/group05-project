@@ -2,7 +2,7 @@
 import { useState } from "react";
 import api from "../services/api"; // 🧩 axios instance đã cấu hình sẵn baseURL
 
-export default function AddUser({ fetchUsers }) {
+export default function AddUser({ onSuccess }) {
   // 🧠 State quản lý dữ liệu form
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -45,8 +45,8 @@ export default function AddUser({ fetchUsers }) {
       console.log("✅ Server phản hồi:", res.data);
       alert(`✅ Thêm user thành công: ${res.data.name}`);
 
-      // 🔄 Làm mới danh sách (nhờ hàm từ App.jsx)
-      if (fetchUsers) fetchUsers();
+      // 🔄 Trigger reload danh sách
+      if (onSuccess) onSuccess();
 
       // 🧹 Reset form
       setName("");

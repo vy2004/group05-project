@@ -1,19 +1,70 @@
-// src/services/api.js
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
+  baseURL: "http://localhost:3000", // ✅ Backend đang chạy ở cổng 3000
   headers: { "Content-Type": "application/json" },
-  timeout: 10000,
+  timeout: 30000, // 30 giây
 });
 
-// (tuỳ chọn) Interceptor hiện alert khi lỗi:
+// Nếu có token trong localStorage thì set Authorization header
+const storedToken = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
+if (storedToken) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+}
+
+api.setAuthToken = (token) => {
+  if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  else delete api.defaults.headers.common['Authorization'];
+};
+
+// (tuỳ chọn) Hiển thị lỗi
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     console.error("API error:", err?.response || err?.message);
+    alert("Không thể kết nối tới backend. Kiểm tra server!");
     return Promise.reject(err);
   }
 );
+
+export const getUsers = async () => {
+  try {
+    const res = await api.get("/users");
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    throw err;
+  }
+};
+
+export const addUser = async (userData) => {
+  try {
+    const res = await api.post("/users", userData);
+    return res.data;
+  } catch (err) {
+    console.error("Error adding user:", err);
+    throw err;
+  }
+};
+
+export const updateUser = async (id, userData) => {
+  try {
+    const res = await api.put(`/users/${id}`, userData);
+    return res.data;
+  } catch (err) {
+    console.error("Error updating user:", err);
+    throw err;
+  }
+};
+
+export const deleteUser = async (id) => {
+  try {
+    const res = await api.delete(`/users/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    throw err;
+  }
+};
 
 export default api;
