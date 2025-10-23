@@ -7,8 +7,6 @@ const bcrypt = require("bcrypt");
 const userRoutes = require("./routes/user");
 const authRoutes = require("./routes/auth");
 const profileRoutes = require("./routes/profile");
-const passwordRoutes = require("./routes/password");
-const avatarRoutes = require("./routes/avatar");
 const User = require("./models/user");
 
 dotenv.config();
@@ -26,9 +24,6 @@ app.use(
 
 // ✅ Đọc dữ liệu JSON từ request body
 app.use(express.json());
-
-// ✅ Serve static files từ thư mục uploads
-app.use('/uploads', express.static('uploads'));
 
 // ✅ Kết nối MongoDB Atlas
 mongoose
@@ -85,10 +80,6 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 // ✅ Dùng routes/profile.js cho quản lý profile
 app.use("/profile", profileRoutes);
-// ✅ Dùng routes/password.js cho quên mật khẩu và reset
-app.use("/password", passwordRoutes);
-// ✅ Dùng routes/avatar.js cho upload avatar
-app.use("/avatar", avatarRoutes);
 
 // ✅ Khởi động backend server
 const PORT = process.env.PORT || 3000;

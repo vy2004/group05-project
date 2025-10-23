@@ -186,3 +186,4 @@ Chụp màn hình các test case sau:
 - Đảm bảo đã login và có token hợp lệ
 - Kiểm tra Authorization header format: "Bearer {token}"
 
+

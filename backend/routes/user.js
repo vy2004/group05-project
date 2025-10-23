@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
-const { xacThuc } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 const { kiemTraQuyenAdmin, kiemTraQuyenXoaUser } = require('../middleware/rbac');
 
 // Lấy danh sách user (chỉ Admin)
-router.get('/', xacThuc, kiemTraQuyenAdmin, async (req, res) => {
+router.get('/', auth, kiemTraQuyenAdmin, async (req, res) => {
   try {
     console.log('🔍 Admin đang xem danh sách user:', req.userInfo.email);
     const users = await User.find().select('-password').sort({ createdAt: -1 });
@@ -84,7 +84,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Xóa user theo id (Admin hoặc tự xóa)
-router.delete('/:id', xacThuc, kiemTraQuyenXoaUser, async (req, res) => {
+router.delete('/:id', auth, kiemTraQuyenXoaUser, async (req, res) => {
   try {
     const { id } = req.params;
     console.log('🗑️ Xóa user với ID:', id, 'bởi:', req.userInfo.email);

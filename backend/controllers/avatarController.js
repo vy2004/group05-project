@@ -33,39 +33,6 @@ const taiLenAvatar = async (req, res) => {
       });
     }
 
-    // Tạm thời bỏ qua Cloudinary, chỉ cập nhật database với URL giả
-    const fakeAvatarUrl = `http://localhost:3000/uploads/${req.file.filename}`;
-
-    // Cập nhật avatar URL trong database
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { avatar: fakeAvatarUrl },
-      { new: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy người dùng'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Upload avatar thành công (Test mode)',
-      data: {
-        avatar: fakeAvatarUrl,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          avatar: user.avatar
-        }
-      }
-    });
-
-    // Code upload thật với Cloudinary (comment lại để test):
-    /*
     // Upload lên Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'group05-avatars',
@@ -106,7 +73,6 @@ const taiLenAvatar = async (req, res) => {
         }
       }
     });
-    */
 
   } catch (error) {
     console.error('Lỗi upload avatar:', error);
