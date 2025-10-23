@@ -7,8 +7,11 @@ const bcrypt = require("bcrypt");
 const userRoutes = require("./routes/user");
 const authRoutes = require("./routes/auth");
 const profileRoutes = require("./routes/profile");
+ backend-QuocVy
 const passwordRoutes = require("./routes/password");
 const avatarRoutes = require("./routes/avatar");
+
+frontend-MinhSang
 const User = require("./models/user");
 
 dotenv.config();
@@ -64,11 +67,19 @@ const taoAdminMau = async () => {
     // Mã hóa mật khẩu
     const salt = await bcrypt.genSalt(10);
     adminData.password = await bcrypt.hash(adminData.password, salt);
+ backend-QuocVy
 
     // Lưu vào database
     const admin = new User(adminData);
     await admin.save();
 
+
+
+    // Lưu vào database
+    const admin = new User(adminData);
+    await admin.save();
+
+frontend-MinhSang
     console.log("✅ Đã tạo tài khoản Admin thành công:");
     console.log("📧 Email:", adminData.email);
     console.log("🔑 Password:", 'admin123');
@@ -85,10 +96,13 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 // ✅ Dùng routes/profile.js cho quản lý profile
 app.use("/profile", profileRoutes);
+backend-QuocVy
 // ✅ Dùng routes/password.js cho quên mật khẩu và reset
 app.use("/password", passwordRoutes);
 // ✅ Dùng routes/avatar.js cho upload avatar
 app.use("/avatar", avatarRoutes);
+
+frontend-MinhSang
 
 // ✅ Khởi động backend server
 const PORT = process.env.PORT || 3000;

@@ -1,153 +1,241 @@
 // 📁 src/components/UserList.jsx
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "../services/api";
 
-export default function UserList({ reloadFlag }) {
+export default function UserList({ reloadSignal, onChanged }) {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({ name: "", email: "", age: "" });
+  const [editValues, setEditValues] = useState({ name: "", email: "", age: "" });
 
-  // 🟢 Lấy danh sách user từ backend
+  // 🧩 Hàm tải danh sách user từ backend
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const res = await api.get("/users");
-      setUsers(res.data);
+      setUsers(res.data || []);
     } catch (err) {
       console.error("❌ Lỗi khi tải danh sách user:", err);
-      alert("Không thể tải danh sách user. Kiểm tra backend.");
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔁 Reload danh sách khi reloadFlag thay đổi
+  // 🟢 useEffect gọi API khi component mount hoặc có tín hiệu reload
   useEffect(() => {
     fetchUsers();
-  }, [reloadFlag]);
+  }, [reloadSignal]);
 
-  // ✏️ Bắt đầu sửa user
-  const handleEdit = (user) => {
-    setEditingId(user._id);
-    setEditData({ name: user.name, email: user.email, age: user.age });
+  // 🧩 Bắt đầu chỉnh sửa user
+  const startEdit = (user) => {
+    setEditingId(user._id || user.id);
+    setEditValues({
+      name: user.name ?? "",
+      email: user.email ?? "",
+      age: user.age ?? "",
+    });
   };
 
-  // ❌ Hủy sửa
+  // 🧩 Hủy chỉnh sửa
   const cancelEdit = () => {
     setEditingId(null);
-    setEditData({ name: "", email: "", age: "" });
+    setEditValues({ name: "", email: "", age: "" });
   };
 
-  // 💾 Lưu user sau khi sửa (PUT)
-  const saveEdit = async (id) => {
-    if (!editData.name || !editData.email || !editData.age) {
-      alert("❌ Vui lòng nhập đủ thông tin!");
-      return;
+  // 🧩 Cập nhật giá trị đang chỉnh sửa
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEditValues((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // 🧩 Kiểm tra dữ liệu hợp lệ trước khi lưu
+  const validateEdit = () => {
+    if (!editValues.name.trim() || !editValues.email.trim()) {
+      alert("⚠️ Vui lòng nhập đầy đủ tên và email!");
+      return false;
     }
+    if (!/\S+@\S+\.\S+/.test(editValues.email)) {
+      alert("⚠️ Email không hợp lệ!");
+      return false;
+    }
+    if (editValues.age && (Number(editValues.age) <= 0 || Number(editValues.age) > 120)) {
+      alert("⚠️ Tuổi phải nằm trong khoảng 1 - 120!");
+      return false;
+    }
+    return true;
+  };
+
+  // 🧩 Lưu thay đổi user
+  const saveEdit = async (id) => {
+    if (!validateEdit()) return;
 
     try {
-      const res = await api.put(`/users/${id}`, {
-        name: editData.name,
-        email: editData.email,
-        age: Number(editData.age),
-      });
-      alert("✅ Cập nhật user thành công!");
-      setUsers((prev) => prev.map((u) => (u._id === id ? res.data : u)));
-      cancelEdit();
+      const payload = {
+        name: editValues.name,
+        email: editValues.email,
+        age: editValues.age === "" ? undefined : Number(editValues.age),
+      };
+
+      await api.put(`/users/${id}`, payload);
+      alert("✅ Cập nhật thành công!");
+      setEditingId(null);
+      setEditValues({ name: "", email: "", age: "" });
+      await fetchUsers();
     } catch (err) {
       console.error("❌ Lỗi khi cập nhật user:", err);
-      alert("Không thể cập nhật user!");
+      alert("❌ Cập nhật thất bại, thử lại!");
     }
   };
 
-  // 🗑️ Xóa user (DELETE)
+  // 🧩 Xóa user
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa user này không?")) return;
 
     try {
       await api.delete(`/users/${id}`);
-      alert("🗑️ Đã xóa user!");
-      setUsers((prev) => prev.filter((u) => u._id !== id));
+      alert("🗑️ Xóa thành công!");
+      await fetchUsers();
     } catch (err) {
       console.error("❌ Lỗi khi xóa user:", err);
-      alert("Không thể xóa user!");
+      alert("❌ Xóa thất bại, thử lại!");
     }
   };
 
+  // 🧩 Hiển thị khi đang tải hoặc chưa có user
+  if (loading) return <div>⏳ Đang tải dữ liệu...</div>;
+  if (!users || users.length === 0) return <div>📭 Chưa có user nào.</div>;
+
   return (
-    <div style={{ marginTop: 30 }}>
-      <h3>📋 Danh sách user</h3>
+    <div style={{ marginTop: 20 }}>
+      <h3>📋 Danh sách người dùng</h3>
+      <table
+        className="user-table"
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+        }}
+      >
+        <thead style={{ background: "#f8f9fa" }}>
+          <tr>
+            <th style={{ padding: 10 }}>Tên</th>
+            <th style={{ padding: 10 }}>Email</th>
+            <th style={{ padding: 10, width: 100 }}>Tuổi</th>
+            <th style={{ padding: 10 }}>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((u) => {
+            const id = u._id || u.id;
+            const isEditing = editingId === id;
 
-      {users.length === 0 ? (
-        <p>Chưa có user nào trong hệ thống.</p>
-      ) : (
-        <table border="1" cellPadding="8" style={{ borderCollapse: "collapse" }}>
-          <thead style={{ backgroundColor: "#f2f2f2" }}>
-            <tr>
-              <th>#</th>
-              <th>Tên</th>
-              <th>Email</th>
-              <th>Tuổi</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u, i) => (
-              <tr key={u._id}>
-                <td>{i + 1}</td>
+            return (
+              <tr key={id}>
+                <td style={{ padding: 8 }}>
+                  {isEditing ? (
+                    <input
+                      name="name"
+                      value={editValues.name}
+                      onChange={handleChange}
+                      style={{ width: "100%", padding: 6, borderRadius: 4 }}
+                    />
+                  ) : (
+                    u.name
+                  )}
+                </td>
 
-                {editingId === u._id ? (
-                  <>
-                    <td>
-                      <input
-                        value={editData.name}
-                        onChange={(e) =>
-                          setEditData({ ...editData, name: e.target.value })
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        value={editData.email}
-                        onChange={(e) =>
-                          setEditData({ ...editData, email: e.target.value })
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        value={editData.age}
-                        onChange={(e) =>
-                          setEditData({ ...editData, age: e.target.value })
-                        }
-                      />
-                    </td>
-                    <td>
-                      <button onClick={() => saveEdit(u._id)}>💾 Lưu</button>
-                      <button onClick={cancelEdit} style={{ marginLeft: 6 }}>
+                <td style={{ padding: 8 }}>
+                  {isEditing ? (
+                    <input
+                      name="email"
+                      value={editValues.email}
+                      onChange={handleChange}
+                      style={{ width: "100%", padding: 6, borderRadius: 4 }}
+                    />
+                  ) : (
+                    u.email
+                  )}
+                </td>
+
+                <td style={{ padding: 8 }}>
+                  {isEditing ? (
+                    <input
+                      name="age"
+                      type="number"
+                      value={editValues.age}
+                      onChange={handleChange}
+                      style={{ width: "100%", padding: 6, borderRadius: 4 }}
+                    />
+                  ) : (
+                    u.age ?? "-"
+                  )}
+                </td>
+
+                <td style={{ padding: 8 }}>
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={() => saveEdit(id)}
+                        style={{
+                          background: "#28a745",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 5,
+                          padding: "6px 10px",
+                          marginRight: 6,
+                        }}
+                      >
+                        💾 Lưu
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        style={{
+                          background: "#6c757d",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 5,
+                          padding: "6px 10px",
+                        }}
+                      >
                         ❌ Hủy
                       </button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td>{u.name}</td>
-                    <td>{u.email}</td>
-                    <td>{u.age}</td>
-                    <td>
-                      <button onClick={() => handleEdit(u)}>✏️ Sửa</button>
+                    </>
+                  ) : (
+                    <>
                       <button
-                        onClick={() => handleDelete(u._id)}
-                        style={{ marginLeft: 6 }}
+                        onClick={() => startEdit(u)}
+                        style={{
+                          background: "#007bff",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 5,
+                          padding: "6px 10px",
+                          marginRight: 6,
+                        }}
+                      >
+                        ✏️ Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDelete(id)}
+                        style={{
+                          background: "#dc3545",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 5,
+                          padding: "6px 10px",
+                        }}
                       >
                         🗑️ Xóa
                       </button>
-                    </td>
-                  </>
-                )}
+                    </>
+                  )}
+                </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
