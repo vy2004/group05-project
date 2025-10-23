@@ -1,19 +1,18 @@
-// 📁 src/services/api.js
+// src/services/api.js
 import axios from "axios";
 
-// ✅ Cấu hình địa chỉ backend (IP của máy backend)
 const api = axios.create({
-  baseURL: "http://192.168.1.10:3000", // ⚠️ Thay bằng IP thật backend nếu khác
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
   headers: { "Content-Type": "application/json" },
   timeout: 10000,
 });
 
-// ✅ Kiểm tra thử khi khởi tạo (log ra console)
+// (tuỳ chọn) Interceptor hiện alert khi lỗi:
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("❌ Lỗi API:", error.message);
-    return Promise.reject(error);
+  (res) => res,
+  (err) => {
+    console.error("API error:", err?.response || err?.message);
+    return Promise.reject(err);
   }
 );
 
