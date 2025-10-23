@@ -1,14 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const User = require('../models/user');
+const auth = require('../middleware/auth');
+const { kiemTraQuyenAdmin, kiemTraQuyenXoaUser } = require('../middleware/rbac');
 
-// Lấy danh sách user
-router.get('/', async (req, res) => {
+// Lấy danh sách user (chỉ Admin)
+router.get('/', auth, kiemTraQuyenAdmin, async (req, res) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 });
-    res.json(users);
+    console.log('🔍 Admin đang xem danh sách user:', req.userInfo.email);
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    res.json({
+      message: 'Lấy danh sách user thành công',
+      users: users,
+      total: users.length
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Lỗi khi lấy danh sách user:', err);
+    res.status(500).json({ message: 'Lỗi server khi lấy danh sách user' });
   }
 });
 
@@ -75,20 +83,42 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Xóa user theo id
-router.delete('/:id', async (req, res) => {
+// Xóa user theo id (Admin hoặc tự xóa)
+router.delete('/:id', auth, kiemTraQuyenXoaUser, async (req, res) => {
   try {
-    console.log('📩 DELETE /users/:id params:', req.params); // debug xem id
     const { id } = req.params;
+    console.log('🗑️ Xóa user với ID:', id, 'bởi:', req.userInfo.email);
+    
+    // Tìm user cần xóa
+    const userToDelete = await User.findById(id);
+    if (!userToDelete) {
+      return res.status(404).json({ message: 'Không tìm thấy user để xóa' });
+    }
+
+    // Admin không thể xóa chính mình
+    if (req.userInfo.role === 'admin' && req.userInfo._id.toString() === id) {
+      return res.status(400).json({ 
+        message: 'Admin không thể xóa tài khoản của chính mình' 
+      });
+    }
+
+    // Thực hiện xóa
     const deleted = await User.findByIdAndDelete(id);
-    if (!deleted) return res.status(404).json({ message: 'User không tồn tại' });
-    return res.json({ message: 'Xóa thành công', user: deleted });
+    console.log('✅ Đã xóa user:', deleted.email);
+    
+    return res.json({ 
+      message: 'Xóa user thành công', 
+      deletedUser: {
+        id: deleted._id,
+        name: deleted.name,
+        email: deleted.email,
+        role: deleted.role
+      }
+    });
   } catch (err) {
     console.error('Lỗi khi xóa user:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Lỗi server khi xóa user' });
   }
-  
-}
-);
+});
 
 module.exports = router;

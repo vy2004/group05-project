@@ -1,16 +1,34 @@
+frontend-auth
+import { BrowserRouter as Router } from "react-router-dom";
+import AppContent from "./components/AppContent";
+import "./App.css";
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+
+// 📁 src/App.jsx
 import { useState } from "react";
 import AddUser from "./components/AddUser";
 import UserList from "./components/UserList";
+frontend-profile
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
 import api from "./services/api";
+main
 import "./App.css";
 
 function App() {
-  const [reloadSignal, setReloadSignal] = useState(0);
-  const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null));
-  const [isLogin, setIsLogin] = useState(true); // true = show login, false = show signup
+  // 🧠 State dùng làm "tín hiệu" reload danh sách user
+  const [reloadSignal, setReloadSignal] = useState(false);
+
+  // 🔁 Khi thêm user thành công → đảo trạng thái reloadSignal để UserList re-render
+  const handleUserAdded = () => {
+    setReloadSignal((prev) => !prev);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('jwt_token');
@@ -77,6 +95,7 @@ function App() {
 
   // Nếu chưa đăng nhập, hiển thị form đăng nhập/đăng ký
   return (
+frontend-profile
     <div className="App" style={{ 
       minHeight: '100vh',
       display: 'flex',
@@ -178,7 +197,18 @@ function App() {
         )}
       </div>
       {token && <Profile isAuthenticated={true} />}
+
+    <div style={{ padding: 20 }}>
+      <h1>📚 Quản lý User (Frontend React + MongoDB)</h1>
+
+      {/* 🧩 Form thêm user (truyền callback để báo cho App biết khi thêm user mới) */}
+      <AddUser onUserAdded={handleUserAdded} />
+
+      {/* 🧩 Danh sách user (tự reload mỗi khi reloadSignal thay đổi) */}
+      <UserList fetchUsersSignal={reloadSignal} />
+ main
     </div>
+ main
   );
 }
 

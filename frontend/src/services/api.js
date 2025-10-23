@@ -1,11 +1,20 @@
+frontend-auth
 import axios from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:3000", // ✅ Backend đang chạy ở cổng 3000
+
+// src/services/api.js
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
+main
   headers: { "Content-Type": "application/json" },
   timeout: 30000, // 30 giây
 });
 
+frontend-auth
 // Nếu có token trong localStorage thì set Authorization header
 const storedToken = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
 if (storedToken) {
@@ -18,16 +27,34 @@ api.setAuthToken = (token) => {
 };
 
 // (tuỳ chọn) Hiển thị lỗi
+
+// (tuỳ chọn) Interceptor hiện alert khi lỗi:
+ main
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     console.error("API error:", err?.response || err?.message);
+frontend-profile
     if (err.response?.status === 401) {
       // Nếu token hết hạn hoặc không hợp lệ
       localStorage.removeItem('jwt_token');
       api.setAuthToken(null);
       window.location.reload();
     }
+
+frontend-auth
+    
+    // Nếu là lỗi 401, clear token và redirect về login
+    if (err?.response?.status === 401) {
+      console.log("🔐 Token expired, clearing storage...");
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('current_user');
+      // Không hiển thị alert để tránh spam
+    }
+    
+
+main
+main
     return Promise.reject(err);
   }
 );
@@ -72,22 +99,68 @@ export const deleteUser = async (id) => {
   }
 };
 
+ frontend-profile
 export const getProfile = async () => {
   try {
     const res = await api.get('/profile');
     return res.data;
   } catch (err) {
     console.error("Error fetching profile:", err);
+
+// API cho quên mật khẩu
+export const forgotPassword = async (email) => {
+  try {
+    const res = await api.post('/password/forgot', { email });
+    return res.data;
+  } catch (err) {
+    console.error("Error sending forgot password:", err);
+ main
     throw err;
   }
 };
 
+frontend-profile
 export const updateProfile = async (profileData) => {
   try {
     const res = await api.put('/profile', profileData);
     return res.data;
   } catch (err) {
     console.error("Error updating profile:", err);
+
+// API cho reset mật khẩu
+export const resetPassword = async (token, newPassword) => {
+  try {
+    const res = await api.post('/password/reset', { token, newPassword });
+    return res.data;
+  } catch (err) {
+    console.error("Error resetting password:", err);
+    throw err;
+  }
+};
+
+// API cho upload avatar
+export const uploadAvatar = async (formData) => {
+  try {
+    const res = await api.post('/avatar/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error uploading avatar:", err);
+    throw err;
+  }
+};
+
+// API cho xóa avatar
+export const removeAvatar = async () => {
+  try {
+    const res = await api.delete('/avatar/remove');
+    return res.data;
+  } catch (err) {
+    console.error("Error removing avatar:", err);
+main
     throw err;
   }
 };
