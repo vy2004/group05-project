@@ -34,6 +34,14 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     console.error("API error:", err?.response || err?.message);
+frontend-profile
+    if (err.response?.status === 401) {
+      // Nếu token hết hạn hoặc không hợp lệ
+      localStorage.removeItem('jwt_token');
+      api.setAuthToken(null);
+      window.location.reload();
+    }
+
 frontend-auth
     
     // Nếu là lỗi 401, clear token và redirect về login
@@ -45,6 +53,7 @@ frontend-auth
     }
     
 
+main
 main
     return Promise.reject(err);
   }
@@ -90,6 +99,14 @@ export const deleteUser = async (id) => {
   }
 };
 
+ frontend-profile
+export const getProfile = async () => {
+  try {
+    const res = await api.get('/profile');
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+
 // API cho quên mật khẩu
 export const forgotPassword = async (email) => {
   try {
@@ -97,9 +114,18 @@ export const forgotPassword = async (email) => {
     return res.data;
   } catch (err) {
     console.error("Error sending forgot password:", err);
+ main
     throw err;
   }
 };
+
+frontend-profile
+export const updateProfile = async (profileData) => {
+  try {
+    const res = await api.put('/profile', profileData);
+    return res.data;
+  } catch (err) {
+    console.error("Error updating profile:", err);
 
 // API cho reset mật khẩu
 export const resetPassword = async (token, newPassword) => {
@@ -134,6 +160,7 @@ export const removeAvatar = async () => {
     return res.data;
   } catch (err) {
     console.error("Error removing avatar:", err);
+main
     throw err;
   }
 };
