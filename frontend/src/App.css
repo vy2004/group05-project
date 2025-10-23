@@ -59,6 +59,31 @@
 
 .action-btn--delete {
   background-color: #dc3545;
+frontend-auth
+=======
+}
+
+.action-btn--edit:hover {
+  background-color: #0066d2;
+}
+
+.action-btn--delete:hover {
+  background-color: #bb2d3b;
+}
+
+/* Tiêu đề “Danh sách người dùng” */
+h3 {
+  width: 90%;
+  max-width: 900px;
+  margin: 0 auto;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #444;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+main
 }
 
 .action-btn--edit:hover {
@@ -82,3 +107,4 @@ h3 {
   align-items: center;
   gap: 8px;
 }
+

@@ -1,3 +1,14 @@
+frontend-auth
+import { BrowserRouter as Router } from "react-router-dom";
+import AppContent from "./components/AppContent";
+import "./App.css";
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+
 // 📁 src/App.jsx
 import { useState } from "react";
 import AddUser from "./components/AddUser";
@@ -23,6 +34,7 @@ function App() {
       {/* 🧩 Danh sách user (tự reload mỗi khi reloadSignal thay đổi) */}
       <UserList fetchUsersSignal={reloadSignal} />
     </div>
+ main
   );
 }
 

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Fix Authentication Error</h1>
+    
+    <div>
+        <button onclick="clearStorage()">1. Clear Local Storage</button>
+        <button onclick="testLogin()">2. Test Login</button>
+        <button onclick="goToApp()">3. Go to App</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        function clearStorage() {
+            try {
+                // Clear all localStorage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                document.getElementById('result').innerHTML = 
+                    '<p class="success">✅ Local Storage cleared successfully!</p>' +
+                    '<p class="info">Now click "Test Login" to get a new token.</p>';
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    '<p class="error">❌ Error: ' + error.message + '</p>';
+            }
+        }
+        
+        async function testLogin() {
+            try {
+                const response = await fetch('http://localhost:3000/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.token) {
+                    // Save token to localStorage
+                    localStorage.setItem('jwt_token', data.token);
+                    localStorage.setItem('current_user', JSON.stringify(data.user));
+                    
+                    document.getElementById('result').innerHTML = 
+                        '<p class="success">✅ Login successful!</p>' +
+                        '<p class="info">Token: ' + data.token.substring(0, 50) + '...</p>' +
+                        '<p class="info">User: ' + data.user.name + ' (' + data.user.role + ')</p>' +
+                        '<p class="info">Now click "Go to App" to test the application.</p>';
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        '<p class="error">❌ Login failed: ' + (data.message || 'Unknown error') + '</p>';
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    '<p class="error">❌ Error: ' + error.message + '</p>';
+            }
+        }
+        
+        function goToApp() {
+            window.location.href = 'http://localhost:3001';
+        }
+    </script>
+</body>
+</html>
+
+
