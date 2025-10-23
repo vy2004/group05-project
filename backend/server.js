@@ -1,55 +1,88 @@
 // server.js
 const express = require("express");
+const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
+const bcrypt = require("bcrypt");
+const userRoutes = require("./routes/user");
+const authRoutes = require("./routes/auth");
+const profileRoutes = require("./routes/profile");
+const User = require("./models/user");
 
+dotenv.config();
 const app = express();
-app.use(cors());           // cho phép FE gọi API trong giai đoạn dev
-app.use(express.json());   // đọc JSON body
 
-// 1) Kết nối MongoDB Atlas
+// ✅ Cho phép frontend React (port 3001) gọi API
+app.use(
+  cors({
+    origin: "http://localhost:3001", // frontend chạy ở port 3001
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  })
+);
+
+// ✅ Đọc dữ liệu JSON từ request body
+app.use(express.json());
+
+// ✅ Kết nối MongoDB Atlas
 mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB Atlas"))
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1);
-  });
+  .connect(
+    "mongodb+srv://tranminhkhang05121964_db_user:CuGgfSW59SWTz9Hz@cluster0.lwvtbtn.mongodb.net/groupDB?retryWrites=true&w=majority&appName=groupDB"
+  )
+  .then(async () => {
+    console.log("✅ Kết nối MongoDB thành công");
+    // Tạo admin mẫu nếu chưa có
+    await taoAdminMau();
+  })
+  .catch((err) => console.error("❌ Lỗi kết nối MongoDB:", err));
 
-// 2) Import Model
-const User = require("./models/User");
-
-// 3) API GET users: trả danh sách từ MongoDB
-app.get("/users", async (req, res) => {
+// Hàm tạo admin mẫu
+const taoAdminMau = async () => {
   try {
-    const users = await User.find().sort({ createdAt: -1 });
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
-
-// 4) API POST users: thêm user vào MongoDB
-app.post("/users", async (req, res) => {
-  try {
-    const { name, email } = req.body;
-
-    // kiểm tra đơn giản
-    if (!name?.trim() || !/\S+@\S+\.\S+/.test(email || "")) {
-      return res.status(400).json({ message: "Invalid name or email" });
+    // Kiểm tra xem đã có admin chưa
+    const existingAdmin = await User.findOne({ role: 'admin' });
+    if (existingAdmin) {
+      console.log("👑 Đã có admin trong hệ thống:", existingAdmin.email);
+      return;
     }
 
-    const newUser = await User.create({ name: name.trim(), email: email.toLowerCase() });
-    res.status(201).json(newUser);
-  } catch (err) {
-    // lỗi trùng email sẽ vào đây (unique index)
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
+    // Tạo admin mới
+    const adminData = {
+      name: 'Admin Quản Trị',
+      email: 'admin@example.com',
+      password: 'admin123',
+      role: 'admin',
+      age: 25
+    };
 
-// 5) Start server
+    // Mã hóa mật khẩu
+    const salt = await bcrypt.genSalt(10);
+    adminData.password = await bcrypt.hash(adminData.password, salt);
+
+    // Lưu vào database
+    const admin = new User(adminData);
+    await admin.save();
+
+    console.log("✅ Đã tạo tài khoản Admin thành công:");
+    console.log("📧 Email:", adminData.email);
+    console.log("🔑 Password:", 'admin123');
+    console.log("👑 Role:", adminData.role);
+
+  } catch (error) {
+    console.error("❌ Lỗi khi tạo admin:", error);
+  }
+};
+
+// ✅ Dùng routes/user.js cho CRUD
+app.use("/users", userRoutes);
+// ✅ Dùng routes/auth.js cho authentication
+app.use("/auth", authRoutes);
+// ✅ Dùng routes/profile.js cho quản lý profile
+app.use("/profile", profileRoutes);
+
+// ✅ Khởi động backend server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 Backend đang chạy tại http://localhost:${PORT}`);
 });
