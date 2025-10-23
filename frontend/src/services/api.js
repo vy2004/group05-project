@@ -1,11 +1,20 @@
+frontend-auth
 import axios from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:3000", // ✅ Backend đang chạy ở cổng 3000
+
+// src/services/api.js
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
+main
   headers: { "Content-Type": "application/json" },
   timeout: 30000, // 30 giây
 });
 
+frontend-auth
 // Nếu có token trong localStorage thì set Authorization header
 const storedToken = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
 if (storedToken) {
@@ -18,10 +27,14 @@ api.setAuthToken = (token) => {
 };
 
 // (tuỳ chọn) Hiển thị lỗi
+
+// (tuỳ chọn) Interceptor hiện alert khi lỗi:
+ main
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     console.error("API error:", err?.response || err?.message);
+frontend-auth
     
     // Nếu là lỗi 401, clear token và redirect về login
     if (err?.response?.status === 401) {
@@ -31,6 +44,8 @@ api.interceptors.response.use(
       // Không hiển thị alert để tránh spam
     }
     
+
+main
     return Promise.reject(err);
   }
 );
