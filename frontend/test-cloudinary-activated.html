@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cloudinary Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success-section {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-title {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-steps {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .test-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .test-steps li {
+            margin-bottom: 8px;
+        }
+        .expected-result {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🚀 Cloudinary Đã Được Kích Hoạt!</h1>
+        
+        <div class="success-section">
+            <h2>✅ Cấu hình hoàn tất:</h2>
+            <ul>
+                <li><strong>Cloud Name:</strong> duliaritw</li>
+                <li><strong>API Key:</strong> 187235595877241</li>
+                <li><strong>API Secret:</strong> ywhHPDyn3WGjTpycECsWx3wbB</li>
+                <li><strong>File .env:</strong> Đã tạo thành công</li>
+                <li><strong>Backend Server:</strong> Đã restart với cấu hình mới</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🧪 Cách test Cloudinary:</h2>
+            <div class="test-steps">
+                <ol>
+                    <li>Mở ứng dụng frontend (React app)</li>
+                    <li>Đăng nhập vào tài khoản</li>
+                    <li>Vào trang Profile</li>
+                    <li>Upload avatar mới (chọn file ảnh)</li>
+                    <li>Kiểm tra kết quả</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🎯 Kết quả mong đợi:</h2>
+            <div class="expected-result">
+                <strong>✅ Thành công:</strong>
+                <ul>
+                    <li>Avatar sẽ được upload lên Cloudinary</li>
+                    <li>URL avatar sẽ có dạng: <code>https://res.cloudinary.com/duliaritw/image/upload/v1234567890/group05-avatars/avatar-1234567890.jpg</code></li>
+                    <li>Ảnh sẽ được tự động resize về 300x300px</li>
+                    <li>Ảnh sẽ được crop tập trung vào khuôn mặt</li>
+                    <li>Chất lượng sẽ được tối ưu tự động</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🔍 Kiểm tra hoạt động:</h2>
+            <div class="test-steps">
+                <h3>1. Kiểm tra log backend:</h3>
+                <div class="code-block">
+📸 UPLOAD AVATAR:<br>
+User ID: 68f4f0e9654db4e6f9aaf0ed<br>
+File: { fieldname: 'avatar', originalname: 'avatar.jpg', ... }<br>
+==========================================
+                </div>
+
+                <h3>2. Kiểm tra database:</h3>
+                <p>Avatar URL sẽ có dạng Cloudinary URL thay vì localhost</p>
+
+                <h3>3. Kiểm tra Cloudinary Dashboard:</h3>
+                <ul>
+                    <li>Vào <a href="https://console.cloudinary.com/console/media_library" target="_blank">Media Library</a></li>
+                    <li>Tìm folder <code>group05-avatars</code></li>
+                    <li>Xem ảnh đã upload</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🚨 Xử lý lỗi:</h2>
+            <div class="test-steps">
+                <h3>Nếu gặp lỗi:</h3>
+                <ul>
+                    <li><strong>Lỗi kết nối:</strong> Kiểm tra internet</li>
+                    <li><strong>Lỗi upload:</strong> Kiểm tra file ảnh hợp lệ</li>
+                    <li><strong>Lỗi API:</strong> Kiểm tra log backend console</li>
+                    <li><strong>Lỗi cấu hình:</strong> Kiểm tra file .env</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🎉 Tính năng Cloudinary:</h2>
+            <div class="test-steps">
+                <ul>
+                    <li><strong>CDN toàn cầu:</strong> Tốc độ tải ảnh nhanh</li>
+                    <li><strong>Tự động xử lý:</strong> Resize, crop, tối ưu chất lượng</li>
+                    <li><strong>Bảo mật:</strong> API credentials được bảo vệ</li>
+                    <li><strong>Quản lý:</strong> Tổ chức file trong folder</li>
+                    <li><strong>Miễn phí:</strong> 25GB storage/tháng</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">📞 Hỗ trợ:</h2>
+            <p>Nếu gặp vấn đề, hãy:</p>
+            <ol>
+                <li>Kiểm tra log backend console</li>
+                <li>Kiểm tra file .env có đúng format không</li>
+                <li>Thử upload ảnh nhỏ (< 1MB) trước</li>
+                <li>Kiểm tra kết nối internet</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
+
