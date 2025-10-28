@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, deleteUser } from '../services/api';
+import { getUsers, deleteUser, updateUser } from '../services/api';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -7,6 +7,9 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({ name: '', email: '', age: '' });
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   // Lấy danh sách user khi component mount
   useEffect(() => {
@@ -24,6 +27,50 @@ const AdminPanel = () => {
       setError(err.response?.data?.message || 'Không thể tải danh sách user');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const batDauEdit = (user) => {
+    setEditingUser(user);
+    setEditFormData({
+      name: user.name,
+      email: user.email,
+      age: user.age || ''
+    });
+  };
+
+  const huyEdit = () => {
+    setEditingUser(null);
+    setEditFormData({ name: '', email: '', age: '' });
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const capNhatUser = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setUpdateLoading(true);
+      const response = await updateUser(editingUser._id, editFormData);
+      
+      // Cập nhật danh sách user
+      setUsers(users.map(u => 
+        u._id === editingUser._id ? response.user : u
+      ));
+      
+      alert('Cập nhật user thành công!');
+      huyEdit();
+    } catch (err) {
+      console.error('Lỗi khi cập nhật user:', err);
+      alert(err.response?.data?.message || 'Không thể cập nhật user');
+    } finally {
+      setUpdateLoading(false);
     }
   };
 
@@ -138,13 +185,29 @@ const AdminPanel = () => {
                     {dinhDangNgay(user.createdAt)}
                   </td>
                   <td>
-                    <button
-                      className="btn-delete"
-                      onClick={() => xoaUser(user._id, user.name)}
-                      disabled={deleteLoading === user._id}
-                    >
-                      {deleteLoading === user._id ? '⏳' : '🗑️'} Xóa
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <button
+                        className="btn-edit"
+                        onClick={() => batDauEdit(user)}
+                        style={{
+                          background: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ✏️ Sửa
+                      </button>
+                      <button
+                        className="btn-delete"
+                        onClick={() => xoaUser(user._id, user.name)}
+                        disabled={deleteLoading === user._id}
+                      >
+                        {deleteLoading === user._id ? '⏳' : '🗑️'} Xóa
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -152,6 +215,78 @@ const AdminPanel = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Modal Edit User */}
+      {editingUser && (
+        <div className="modal-overlay" onClick={huyEdit}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>✏️ Chỉnh sửa thông tin User</h2>
+              <button className="modal-close" onClick={huyEdit}>✕</button>
+            </div>
+            
+            <form onSubmit={capNhatUser} className="edit-form">
+              <div className="form-group">
+                <label htmlFor="edit-name">Tên *</label>
+                <input
+                  type="text"
+                  id="edit-name"
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleEditChange}
+                  required
+                  placeholder="Nhập tên"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-email">Email *</label>
+                <input
+                  type="email"
+                  id="edit-email"
+                  name="email"
+                  value={editFormData.email}
+                  onChange={handleEditChange}
+                  required
+                  placeholder="Nhập email"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-age">Tuổi</label>
+                <input
+                  type="number"
+                  id="edit-age"
+                  name="age"
+                  value={editFormData.age}
+                  onChange={handleEditChange}
+                  placeholder="Nhập tuổi"
+                  min="1"
+                  max="120"
+                />
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={huyEdit}
+                  disabled={updateLoading}
+                >
+                  ❌ Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="btn-save"
+                  disabled={updateLoading}
+                >
+                  {updateLoading ? '⏳ Đang lưu...' : '💾 Lưu thay đổi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

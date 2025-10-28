@@ -13,7 +13,8 @@ export default function UserList({ reloadSignal, onChanged }) {
     setLoading(true);
     try {
       const res = await api.get("/users");
-      setUsers(res.data || []);
+      // Backend trả về { users: [...], total: ... }
+      setUsers(res.data.users || res.data || []);
     } catch (err) {
       console.error("❌ Lỗi khi tải danh sách user:", err);
       setUsers([]);

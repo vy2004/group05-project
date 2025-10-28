@@ -4,12 +4,15 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const userRoutes = require("./routes/user");
-const authRoutes = require("./routes/auth");
-const profileRoutes = require("./routes/profile");
 const User = require("./models/user");
 
+// Load env FIRST, trước khi require các routes/controllers dùng process.env
 dotenv.config();
+
+const userRoutes = require("./routes/user");
+const authRoutes = require("./routes/auth");
+const avatarRoutes = require("./routes/avatar");
+const profileRoutes = require("./routes/profile");
 const app = express();
 
 // ✅ Cho phép frontend React (port 3001) gọi API
@@ -24,6 +27,9 @@ app.use(
 
 // ✅ Đọc dữ liệu JSON từ request body
 app.use(express.json());
+
+// ✅ Serve static files từ folder uploads (để hiển thị avatar)
+app.use('/uploads', express.static('uploads'));
 
 // ✅ Kết nối MongoDB Atlas
 mongoose
@@ -80,6 +86,8 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 // ✅ Dùng routes/profile.js cho quản lý profile
 app.use("/profile", profileRoutes);
+// ✅ Dùng routes/avatar.js cho upload/xóa avatar
+app.use("/avatar", avatarRoutes);
 
 // ✅ Khởi động backend server
 const PORT = process.env.PORT || 3000;

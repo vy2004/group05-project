@@ -18,9 +18,13 @@ const Profile = ({ currentUser, onUserUpdate }) => {
   useEffect(() => {
     const loadProfileData = async () => {
       try {
+        console.log('🔄 Loading profile data from server...');
         setProfileLoading(true);
         const response = await api.get('/profile');
         const profileData = response.data.user;
+        
+        console.log('✅ Profile data loaded:', profileData);
+        console.log('🖼️ Avatar URL:', profileData?.avatar);
         
         // Update state with fresh data
         setUser(profileData);
@@ -33,36 +37,92 @@ const Profile = ({ currentUser, onUserUpdate }) => {
         // Update localStorage with fresh data
         localStorage.setItem('current_user', JSON.stringify(profileData));
         
-        // Notify parent component
-        if (onUserUpdate) {
-          onUserUpdate(profileData);
-        }
+        // Notify parent component (nhưng không trigger re-render vòng lặp)
+        // if (onUserUpdate) {
+        //   onUserUpdate(profileData);
+        // }
       } catch (error) {
-        console.error('Lỗi khi load profile data:', error);
+        console.error('❌ Lỗi khi load profile data:', error);
         setProfileError(error.response?.data?.message || 'Không thể tải thông tin profile');
         
-        // Fallback to currentUser if API fails
-        if (currentUser) {
-          setUser(currentUser);
-          setFormData({
-            name: currentUser?.name || '',
-            email: currentUser?.email || '',
-            age: currentUser?.age || ''
-          });
+        // Fallback to localStorage if API fails
+        const cachedUser = localStorage.getItem('current_user');
+        if (cachedUser) {
+          try {
+            const parsedUser = JSON.parse(cachedUser);
+            console.log('⚠️ Using cached user data:', parsedUser);
+            setUser(parsedUser);
+            setFormData({
+              name: parsedUser?.name || '',
+              email: parsedUser?.email || '',
+              age: parsedUser?.age || ''
+            });
+          } catch (e) {
+            console.error('❌ Error parsing cached user');
+          }
         }
       } finally {
         setProfileLoading(false);
       }
     };
 
-    // Only load if we have a token (user is logged in)
+    // Always load profile data when component mounts
     const token = localStorage.getItem('jwt_token');
     if (token) {
+      console.log('🚀 Profile component mounted, loading data...');
       loadProfileData();
     } else {
+      console.log('⚠️ No token found');
       setProfileLoading(false);
     }
-  }, []); // Empty dependency array - only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Chỉ chạy 1 lần khi component mount
+
+  // Cập nhật khi currentUser prop thay đổi (sau khi upload avatar)
+  useEffect(() => {
+    // Luôn đọc lại từ localStorage để đảm bảo có data mới nhất
+    const cachedUser = localStorage.getItem('current_user');
+    if (cachedUser) {
+      try {
+        const parsedUser = JSON.parse(cachedUser);
+        setUser(parsedUser);
+        console.log('✅ Profile loaded user from localStorage:', parsedUser);
+      } catch (e) {
+        console.error('❌ Error parsing cached user:', e);
+      }
+    }
+    
+    // Nếu có currentUser prop thì ưu tiên dùng nó
+    if (currentUser) {
+      setUser(currentUser);
+      console.log('✅ Profile updated from currentUser prop:', currentUser);
+    }
+  }, [currentUser]);
+
+  // Đồng bộ từ localStorage khi quay lại trang hoặc sau khi upload avatar ở màn khác
+  useEffect(() => {
+    const applyLocalUser = () => {
+      try {
+        const cached = localStorage.getItem('current_user');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          // Nếu avatar hoặc thông tin khác thay đổi, cập nhật vào state
+          setUser(prev => {
+            if (!prev) return parsed;
+            const changed = prev.avatar !== parsed.avatar || prev.name !== parsed.name || prev.email !== parsed.email || prev.age !== parsed.age;
+            return changed ? parsed : prev;
+          });
+        }
+      } catch (_) {}
+    };
+
+    // Áp dụng ngay khi mở component
+    applyLocalUser();
+    // Khi cửa sổ lấy lại focus (quay về từ trang Avatar)
+    const onFocus = () => applyLocalUser();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   useEffect(() => {
     // Update form data when user changes (for editing mode)
@@ -204,6 +264,10 @@ const Profile = ({ currentUser, onUserUpdate }) => {
       </div>
     );
   }
+
+  // Debug: Log user state
+  console.log('🖼️ Profile render - user:', user);
+  console.log('🖼️ Profile render - avatar URL:', user?.avatar);
 
   return (
     <div className="profile-container">
