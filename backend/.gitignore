@@ -3,6 +3,7 @@ node_modules/
 
 # Environment variables
 .env
+config.js
 
 # Log files
 *.log
@@ -22,4 +23,3 @@ build/
 
 # Uploads (nếu có sensitive data)
 uploads/
-
