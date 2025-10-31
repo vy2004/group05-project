@@ -11,13 +11,20 @@ export default function Login({ onLogin, onForgotPassword }) {
     setLoading(true);
     try {
       const res = await api.post('/auth/login', { email, password });
-      const token = res.data?.token;
-      const user = res.data?.user;
-      if (token && user) {
-        localStorage.setItem('jwt_token', token);
+      const { accessToken, refreshToken, user } = res.data;
+      
+      if (accessToken && refreshToken && user) {
+        // ✅ Lưu cả access token và refresh token
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('refresh_token', refreshToken);
         localStorage.setItem('current_user', JSON.stringify(user));
+        
+        // ✅ Set access token vào axios headers
+        api.setAuthToken(accessToken);
+        
+        console.log('✅ Login successful with refresh token');
         alert('Đăng nhập thành công!');
-        if (onLogin) onLogin({ token, user });
+        if (onLogin) onLogin({ token: accessToken, user });
       } else {
         alert('Không nhận được token hoặc thông tin user từ server');
       }
