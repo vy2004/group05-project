@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+feature/refresh-token
 const crypto = require('crypto');
 const User = require('../models/user');
 const RefreshToken = require('../models/refreshToken');
@@ -47,6 +48,12 @@ function getIpAddress(req) {
 
 // ==================== API ENDPOINTS ====================
 
+const User = require('../models/user');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'group05-super-secret-jwt-key-2024';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+main
+
 // POST /auth/signup
 const signup = async (req, res) => {
   try {
@@ -80,6 +87,7 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+ feature/refresh-token
     if (!email || !password) {
       return res.status(400).json({ message: 'Email và password là bắt buộc' });
     }
@@ -108,13 +116,32 @@ const login = async (req, res) => {
       message: 'Đăng nhập thành công',
       accessToken,
       refreshToken,
+
+    if (!email || !password) return res.status(400).json({ message: 'Email và password là bắt buộc' });
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
+
+    const payload = { userId: user._id, email: user.email, role: user.role };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+    res.json({ 
+      message: 'Đăng nhập thành công', 
+      token, 
+ main
       user: { 
         id: user._id, 
         name: user.name, 
         email: user.email, 
         role: user.role,
+ feature/refresh-token
         age: user.age,
         avatar: user.avatar
+        age: user.age
+main
       } 
     });
   } catch (err) {
@@ -123,6 +150,7 @@ const login = async (req, res) => {
   }
 };
 
+ feature/refresh-token
 // POST /auth/refresh
 const refresh = async (req, res) => {
   try {
@@ -206,3 +234,12 @@ const logout = async (req, res) => {
 };
 
 module.exports = { signup, login, logout, refresh };
+
+// POST /auth/logout — for stateless JWT, client should remove token; endpoint provided for symmetry
+const logout = async (req, res) => {
+  // If you implement token blacklisting, handle it here.
+  res.json({ message: 'Logout successful on client — remove token locally' });
+};
+
+module.exports = { signup, login, logout };
+main
