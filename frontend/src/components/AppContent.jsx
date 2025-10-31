@@ -14,7 +14,8 @@ import api from "../services/api";
 function AppContent() {
   const navigate = useNavigate();
   const [reloadSignal, setReloadSignal] = useState(0);
-  const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null));
+  const [profileKey, setProfileKey] = useState(0); // Để force reload Profile
+  const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null));
   const [isLogin, setIsLogin] = useState(true); // true = show login, false = show signup
   const [currentUser, setCurrentUser] = useState(() => {
     // Khôi phục thông tin user từ localStorage khi khởi động
@@ -37,15 +38,44 @@ function AppContent() {
   });
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('jwt_token'); 
-    localStorage.removeItem('current_user');
-    sessionStorage.clear();
-    api.setAuthToken(null); 
-    setToken(null);
-    setCurrentUser(null);
-    setCurrentView('auth');
-    navigate('/');
+  // ✅ Set token vào axios headers khi app khởi động
+  useEffect(() => {
+    if (token) {
+      api.setAuthToken(token);
+      console.log('✅ Restored access token from localStorage');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      
+      // ✅ Gọi API logout để revoke refresh token
+      if (refreshToken) {
+        await api.post('/auth/logout', { refreshToken });
+        console.log('✅ Refresh token revoked');
+      }
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+    } finally {
+      // Clear all tokens
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('current_user');
+      sessionStorage.clear();
+      
+      // Clear axios header
+      api.setAuthToken(null);
+      
+      // Reset state
+      setToken(null);
+      setCurrentUser(null);
+      setCurrentView('auth');
+      navigate('/');
+      
+      console.log('✅ Logged out successfully');
+    }
   }, [navigate]);
 
   // Auto clear invalid tokens
@@ -53,7 +83,8 @@ function AppContent() {
     const checkToken = async () => {
       if (token) {
         try {
-          const response = await api.get('/users');
+          // ✅ Gọi /profile thay vì /users vì user thường không có quyền truy cập /users
+          const response = await api.get('/profile');
           if (!response.data) {
             handleLogout();
           }
@@ -69,8 +100,10 @@ function AppContent() {
   }, [token, handleLogout]);
 
   const handleAvatarUpdate = (updatedUser) => {
+    console.log('📥 AppContent received avatar update:', updatedUser);
     setCurrentUser(updatedUser);
     localStorage.setItem('current_user', JSON.stringify(updatedUser));
+    console.log('✅ AppContent updated currentUser state');
   };
 
   return (
@@ -209,7 +242,11 @@ function AppContent() {
                       </button>
                     )}
                     <button 
-                      onClick={() => setCurrentView('user')}
+                      onClick={() => {
+                        setCurrentView('user');
+                        // Force reload Profile component
+                        setProfileKey(prev => prev + 1);
+                      }}
                       style={{
                         background: currentView === 'user' ? '#007bff' : '#e9ecef',
                         color: currentView === 'user' ? 'white' : '#333',
@@ -275,6 +312,7 @@ function AppContent() {
                   </div>
                 ) : (
                   <Profile 
+                    key={`profile-${profileKey}`}
                     currentUser={currentUser} 
                     onUserUpdate={handleAvatarUpdate}
                   />
@@ -287,6 +325,12 @@ function AppContent() {
                 <UploadAvatar 
                   currentUser={currentUser} 
                   onAvatarUpdate={handleAvatarUpdate}
+                  onUploadSuccess={() => {
+                    // Sau khi upload thành công, chuyển sang tab Profile
+                    console.log('✅ Upload success! Switching to Profile tab...');
+                    setCurrentView('user');
+                    setProfileKey(prev => prev + 1); // Force reload Profile
+                  }}
                 />
               </div>
             )}
