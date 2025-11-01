@@ -53,8 +53,8 @@ const ResetPassword = () => {
     setMessage('');
 
     try {
-      const response = await api.post('/password/reset', {
-        token,
+      // SV1: Sử dụng API mới với token trong URL /auth/resetpassword/:token
+      const response = await api.post(`/auth/resetpassword/${token}`, {
         newPassword
       });
       
