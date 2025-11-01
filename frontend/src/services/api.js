@@ -1,24 +1,11 @@
-frontend-auth
 import axios from "axios";
 
 const api = axios.create({
- feature/refresh-token
   baseURL: "http://localhost:3000",
-
-  baseURL: "http://localhost:3000", // ✅ Backend đang chạy ở cổng 3000
-
-// src/services/api.js
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
-main
-main
   headers: { "Content-Type": "application/json" },
   timeout: 30000,
 });
 
- feature/refresh-token
 // Set auth token
 api.setAuthToken = (token) => {
   if (token) {
@@ -30,11 +17,6 @@ api.setAuthToken = (token) => {
 
 // Restore token from localStorage
 const storedToken = localStorage.getItem('access_token');
-
-frontend-auth
-// Nếu có token trong localStorage thì set Authorization header
-const storedToken = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
-main
 if (storedToken) {
   api.setAuthToken(storedToken);
 }
@@ -56,7 +38,6 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
- feature/refresh-token
 // Interceptor để tự động refresh token khi access token hết hạn
 api.interceptors.response.use(
   (response) => response,
@@ -135,42 +116,10 @@ api.interceptors.response.use(
       console.log('🔐 Token expired, clearing storage...');
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-
-// (tuỳ chọn) Hiển thị lỗi
-
-// (tuỳ chọn) Interceptor hiện alert khi lỗi:
- main
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    console.error("API error:", err?.response || err?.message);
-frontend-profile
-    if (err.response?.status === 401) {
-      // Nếu token hết hạn hoặc không hợp lệ
-      localStorage.removeItem('jwt_token');
-      api.setAuthToken(null);
-      window.location.reload();
-    }
-
-frontend-auth
-    
-    // Nếu là lỗi 401, clear token và redirect về login
-    if (err?.response?.status === 401) {
-      console.log("🔐 Token expired, clearing storage...");
-      localStorage.removeItem('jwt_token');
-main
       localStorage.removeItem('current_user');
     }
-feature/refresh-token
 
     return Promise.reject(error);
-
-    
-
-main
-main
-    return Promise.reject(err);
-main
   }
 );
 
@@ -196,43 +145,11 @@ export const deleteUser = async (id) => {
   return res.data;
 };
 
-feature/refresh-token
 export const forgotPassword = async (email) => {
   const res = await api.post('/password/forgot', { email });
   return res.data;
 };
 
-
- frontend-profile
-export const getProfile = async () => {
-  try {
-    const res = await api.get('/profile');
-    return res.data;
-  } catch (err) {
-    console.error("Error fetching profile:", err);
-
-// API cho quên mật khẩu
-export const forgotPassword = async (email) => {
-  try {
-    const res = await api.post('/password/forgot', { email });
-    return res.data;
-  } catch (err) {
-    console.error("Error sending forgot password:", err);
- main
-    throw err;
-  }
-};
-
-frontend-profile
-export const updateProfile = async (profileData) => {
-  try {
-    const res = await api.put('/profile', profileData);
-    return res.data;
-  } catch (err) {
-    console.error("Error updating profile:", err);
-
-// API cho reset mật khẩu
- main
 export const resetPassword = async (token, newPassword) => {
   const res = await api.post('/password/reset', { token, newPassword });
   return res.data;
@@ -246,19 +163,22 @@ export const uploadAvatar = async (formData) => {
 };
 
 export const removeAvatar = async () => {
-feature/refresh-token
   const res = await api.delete('/avatar/remove');
   return res.data;
+};
 
-  try {
-    const res = await api.delete('/avatar/remove');
-    return res.data;
-  } catch (err) {
-    console.error("Error removing avatar:", err);
-main
-    throw err;
-  }
- main
+// ==================== RBAC API FUNCTIONS ====================
+
+// Cập nhật role của user (chỉ Admin)
+export const updateUserRole = async (userId, role) => {
+  const res = await api.patch(`/users/${userId}/role`, { role });
+  return res.data;
+};
+
+// Lấy danh sách admins/moderators
+export const getAdmins = async () => {
+  const res = await api.get('/users/admins');
+  return res.data;
 };
 
 export default api;

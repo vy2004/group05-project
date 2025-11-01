@@ -7,6 +7,13 @@ exports.getProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'Không tìm thấy thông tin người dùng' });
         }
+        console.log('📋 GET /profile - User data:', {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            avatar: user.avatar,
+            hasAvatar: !!user.avatar
+        });
         res.json({ message: 'Lấy thông tin profile thành công', user });
     } catch (error) {
         console.error('Lỗi khi lấy profile:', error);

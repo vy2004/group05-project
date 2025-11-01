@@ -187,3 +187,12 @@ Chụp màn hình các test case sau:
 - Kiểm tra Authorization header format: "Bearer {token}"
 
 
+
+
+
+
+
+
+
+
+

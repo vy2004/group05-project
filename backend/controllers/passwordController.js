@@ -9,7 +9,7 @@ const createTransporter = () => {
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER || 'your-email@gmail.com',
-      pass: process.env.EMAIL_PASSWORD || 'your-app-password'
+      pass: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || 'your-app-password'
     }
   });
 };
@@ -29,6 +29,7 @@ const guiEmailResetPassword = async (email, resetToken) => {
     try {
       console.log('📧 Đang cấu hình email transporter...');
       console.log('EMAIL_USER:', process.env.EMAIL_USER);
+      console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '***' : 'undefined');
       console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? '***' : 'undefined');
       
       const transporter = createTransporter();

@@ -1,14 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
-const auth = require('../middleware/auth');
-const { kiemTraQuyenAdmin, kiemTraQuyenXoaUser } = require('../middleware/rbac');
+const { xacThuc } = require('../middleware/auth');
+const { kiemTraQuyenAdmin, kiemTraQuyenXoaUser, kiemTraQuyenSuaUser, checkRole } = require('../middleware/rbac');
 
-// Lấy danh sách user (chỉ Admin)
-router.get('/', auth, kiemTraQuyenAdmin, async (req, res) => {
+// Lấy danh sách user
+// Admin: xem tất cả user
+// Moderator: chỉ xem user thường
+router.get('/', xacThuc, checkRole('admin', 'moderator'), async (req, res) => {
   try {
-    console.log('🔍 Admin đang xem danh sách user:', req.userInfo.email);
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    console.log(`🔍 ${req.userInfo.role === 'admin' ? 'Admin' : 'Moderator'} đang xem danh sách user:`, req.userInfo.email);
+    
+    let users;
+    if (req.userInfo.role === 'admin') {
+      // Admin xem tất cả user
+      users = await User.find().select('-password').sort({ createdAt: -1 });
+    } else {
+      // Moderator chỉ xem user thường
+      users = await User.find({ role: 'user' }).select('-password').sort({ createdAt: -1 });
+    }
+    
     res.json({
       message: 'Lấy danh sách user thành công',
       users: users,
@@ -49,8 +60,11 @@ router.post('/', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-router.put('/:id', async (req, res) => {
+
+// Cập nhật user theo id (Admin hoặc Moderator sửa user thường, hoặc tự sửa)
+router.put('/:id', xacThuc, kiemTraQuyenSuaUser, async (req, res) => {
   try {
+    console.log(`📩 PUT /users/:id bởi ${req.userInfo.role}:`, req.userInfo.email);
     console.log('📩 PUT /users/:id params:', req.params);
     console.log('📩 PUT /users/:id body:', req.body);
 
@@ -70,7 +84,7 @@ router.put('/:id', async (req, res) => {
       id,
       { name, email, age: ageNum },
       { new: true, runValidators: true }
-    );
+    ).select('-password');
 
     if (!updated) return res.status(404).json({ message: 'User không tồn tại' });
     return res.json({ message: 'Cập nhật thành công', user: updated });
@@ -84,7 +98,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Xóa user theo id (Admin hoặc tự xóa)
-router.delete('/:id', auth, kiemTraQuyenXoaUser, async (req, res) => {
+router.delete('/:id', xacThuc, kiemTraQuyenXoaUser, async (req, res) => {
   try {
     const { id } = req.params;
     console.log('🗑️ Xóa user với ID:', id, 'bởi:', req.userInfo.email);
@@ -118,6 +132,80 @@ router.delete('/:id', auth, kiemTraQuyenXoaUser, async (req, res) => {
   } catch (err) {
     console.error('Lỗi khi xóa user:', err);
     res.status(500).json({ message: 'Lỗi server khi xóa user' });
+  }
+});
+
+// ============= ADVANCED RBAC APIs =============
+
+// Cập nhật role của user (chỉ Admin)
+// PATCH /users/:id/role
+router.patch('/:id/role', xacThuc, checkRole('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    // Validate role
+    if (!role) {
+      return res.status(400).json({ message: 'Role là bắt buộc' });
+    }
+
+    if (!['user', 'admin', 'moderator'].includes(role)) {
+      return res.status(400).json({ 
+        message: 'Role không hợp lệ. Chỉ chấp nhận: user, admin, moderator' 
+      });
+    }
+
+    // Tìm user
+    const userToUpdate = await User.findById(id);
+    if (!userToUpdate) {
+      return res.status(404).json({ message: 'Không tìm thấy user' });
+    }
+
+    // Admin không thể đổi role của chính mình
+    if (req.userInfo._id.toString() === id) {
+      return res.status(400).json({ 
+        message: 'Admin không thể thay đổi role của chính mình' 
+      });
+    }
+
+    // Cập nhật role
+    userToUpdate.role = role;
+    await userToUpdate.save();
+
+    console.log(`✅ Đã cập nhật role của user ${userToUpdate.email} thành ${role} bởi ${req.userInfo.email}`);
+
+    return res.json({ 
+      message: 'Cập nhật role thành công',
+      user: {
+        id: userToUpdate._id,
+        name: userToUpdate.name,
+        email: userToUpdate.email,
+        role: userToUpdate.role
+      }
+    });
+  } catch (err) {
+    console.error('Lỗi khi cập nhật role:', err);
+    res.status(500).json({ message: 'Lỗi server khi cập nhật role' });
+  }
+});
+
+// Lấy danh sách users có quyền admin hoặc moderator (chỉ Admin)
+// GET /users/admins
+router.get('/admins', xacThuc, checkRole('admin'), async (req, res) => {
+  try {
+    console.log('🔍 Lấy danh sách admins/moderators bởi:', req.userInfo.email);
+    const admins = await User.find({ role: { $in: ['admin', 'moderator'] } })
+      .select('-password')
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      message: 'Lấy danh sách admins/moderators thành công',
+      users: admins,
+      total: admins.length
+    });
+  } catch (err) {
+    console.error('Lỗi khi lấy danh sách admins:', err);
+    res.status(500).json({ message: 'Lỗi server khi lấy danh sách admins' });
   }
 });
 

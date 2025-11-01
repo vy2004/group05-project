@@ -5,6 +5,21 @@
   padding: 20px;
 }
 
+.back-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.back-button:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  transform: translateX(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+}
+
+.back-button:active {
+  transform: translateX(-2px) scale(0.98);
+}
+
 .upload-avatar-card {
   background: white;
   padding: 30px;
@@ -243,4 +258,13 @@
     min-width: auto;
   }
 }
+
+
+
+
+
+
+
+
+
 
