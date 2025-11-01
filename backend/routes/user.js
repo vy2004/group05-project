@@ -3,6 +3,34 @@ const router = express.Router();
 const User = require('../models/user');
 const { xacThuc } = require('../middleware/auth');
 const { kiemTraQuyenAdmin, kiemTraQuyenXoaUser, kiemTraQuyenSuaUser, checkRole } = require('../middleware/rbac');
+const { taiLenAvatar, xoaAvatar } = require('../controllers/avatarController');
+const multer = require('multer');
+
+// Cấu hình multer để xử lý file upload cho avatar
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // Thư mục tạm để lưu file
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
+  },
+  fileFilter: function (req, file, cb) {
+    // Kiểm tra loại file
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ cho phép upload file hình ảnh!'), false);
+    }
+  }
+});
 
 // Lấy danh sách user
 // Admin: xem tất cả user
@@ -208,5 +236,15 @@ router.get('/admins', xacThuc, checkRole('admin'), async (req, res) => {
     res.status(500).json({ message: 'Lỗi server khi lấy danh sách admins' });
   }
 });
+
+// ============= AVATAR UPLOAD APIs =============
+
+// Upload avatar (SV1: API /users/avatar với Multer + Sharp + Cloudinary, middleware JWT)
+// POST /users/avatar
+router.post('/avatar', xacThuc, upload.single('avatar'), taiLenAvatar);
+
+// Xóa avatar
+// DELETE /users/avatar
+router.delete('/avatar', xacThuc, xoaAvatar);
 
 module.exports = router;

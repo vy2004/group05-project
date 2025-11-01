@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: [true, "Mật khẩu là bắt buộc"] },
     role: { type: String, enum: ["user", "admin", "moderator"], default: "user" },
     age: { type: Number },
-    avatar: { type: String, default: '' }, // Avatar URL từ Cloudinary hoặc local
+    avatar: { type: String, default: '' }, // SV3: Field để lưu URL từ Cloudinary vào MongoDB
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date }
   },
