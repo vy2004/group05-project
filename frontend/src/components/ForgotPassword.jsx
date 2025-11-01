@@ -14,7 +14,8 @@ const ForgotPassword = ({ onBackToLogin, onResetPassword }) => {
     setMessage('');
 
     try {
-      const response = await api.post('/password/forgot', { email });
+      // SV1: Sử dụng API mới /auth/forgot-password
+      const response = await api.post('/auth/forgot-password', { email });
       
       if (response.data.success) {
         setIsSuccess(true);

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/user');
 const RefreshToken = require('../models/refreshToken');
+const { sendResetPasswordEmail } = require('../config/email'); // SV3: Sử dụng email config
 
 const JWT_SECRET = process.env.JWT_SECRET || 'group05-super-secret-jwt-key-2024';
 const ACCESS_TOKEN_EXPIRES_IN = '15m'; // Access token: 15 phút
@@ -205,4 +206,135 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, refresh };
+// ==================== SV1: FORGOT PASSWORD & RESET PASSWORD ====================
+
+// POST /auth/forgot-password - SV1: API quên mật khẩu, sinh token + gửi email
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email là bắt buộc'
+      });
+    }
+
+    // Tìm user theo email
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    
+    if (!user) {
+      // Trả về thành công (security: không cho biết email có tồn tại hay không)
+      return res.status(200).json({
+        success: true,
+        message: 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được email reset mật khẩu.'
+      });
+    }
+
+    // SV1: Tạo reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 phút
+
+    // Lưu token vào database
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+    await user.save();
+
+    // SV3: Gửi email với token (sử dụng email config từ SV3)
+    const resetURL = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/reset-password?token=${resetToken}`;
+    const emailSent = await sendResetPasswordEmail(user.email, resetToken, resetURL);
+    
+    if (emailSent) {
+      console.log('✅ Email reset password đã được gửi đến:', user.email);
+      res.status(200).json({
+        success: true,
+        message: 'Email reset mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn.'
+      });
+    } else {
+      // Token vẫn được tạo, nhưng email không gửi được
+      console.warn('⚠️  Token đã được tạo nhưng email không gửi được:', user.email);
+      res.status(200).json({
+        success: true,
+        message: 'Yêu cầu reset mật khẩu đã được xử lý. Vui lòng kiểm tra email hoặc liên hệ admin.',
+        // Chỉ trả về token trong development (không nên làm vậy trong production)
+        ...(process.env.NODE_ENV !== 'production' && { token: resetToken })
+      });
+    }
+
+  } catch (error) {
+    console.error('Lỗi forgot password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server. Vui lòng thử lại sau.'
+    });
+  }
+};
+
+// POST /auth/resetpassword/:token - SV1: API reset password với token từ URL
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params; // Lấy token từ URL params
+    const { newPassword } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token là bắt buộc'
+      });
+    }
+
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mật khẩu mới là bắt buộc'
+      });
+    }
+
+    // Kiểm tra độ dài mật khẩu
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mật khẩu phải có ít nhất 6 ký tự'
+      });
+    }
+
+    // Tìm user với token hợp lệ
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token không hợp lệ hoặc đã hết hạn'
+      });
+    }
+
+    // Mã hóa mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Cập nhật mật khẩu và xóa token
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    console.log('✅ Reset password thành công cho user:', user.email);
+
+    res.status(200).json({
+      success: true,
+      message: 'Mật khẩu đã được đặt lại thành công'
+    });
+
+  } catch (error) {
+    console.error('Lỗi reset password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server. Vui lòng thử lại sau.'
+    });
+  }
+};
+
+module.exports = { signup, login, logout, refresh, forgotPassword, resetPassword };

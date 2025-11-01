@@ -145,14 +145,24 @@ export const deleteUser = async (id) => {
   return res.data;
 };
 
+// Forgot Password - hỗ trợ cả 2 API (cũ /password/forgot và mới /auth/forgot-password)
 export const forgotPassword = async (email) => {
-  const res = await api.post('/password/forgot', { email });
+  // SV1: Sử dụng API mới /auth/forgot-password
+  const res = await api.post('/auth/forgot-password', { email });
   return res.data;
 };
 
-export const resetPassword = async (token, newPassword) => {
-  const res = await api.post('/password/reset', { token, newPassword });
-  return res.data;
+// Reset Password - hỗ trợ cả 2 cách (token trong body hoặc URL)
+export const resetPassword = async (token, newPassword, useUrlToken = false) => {
+  if (useUrlToken) {
+    // SV1: Sử dụng API mới với token trong URL /auth/resetpassword/:token
+    const res = await api.post(`/auth/resetpassword/${token}`, { newPassword });
+    return res.data;
+  } else {
+    // API cũ: token trong body /password/reset
+    const res = await api.post('/password/reset', { token, newPassword });
+    return res.data;
+  }
 };
 
 export const uploadAvatar = async (formData) => {
