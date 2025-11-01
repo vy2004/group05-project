@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const User = require('../models/user');
 const RefreshToken = require('../models/refreshToken');
 const { sendResetPasswordEmail } = require('../config/email'); // SV3: Sử dụng email config
+const { logActivityDirect } = require('../middleware/logActivity'); // SV1: Activity logging
 
 const JWT_SECRET = process.env.JWT_SECRET || 'group05-super-secret-jwt-key-2024';
 const ACCESS_TOKEN_EXPIRES_IN = '15m'; // Access token: 15 phút
@@ -86,12 +87,40 @@ const login = async (req, res) => {
     }
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const ipAddress = getIpAddress(req);
+    
     if (!user) {
+      // SV1: Log failed login attempt
+      await logActivityDirect({
+        userEmail: email,
+        action: 'login',
+        ipAddress: ipAddress,
+        userAgent: req.headers['user-agent'],
+        endpoint: req.path,
+        method: req.method,
+        statusCode: 401,
+        success: false,
+        errorMessage: 'Email hoặc mật khẩu không chính xác'
+      });
       return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
     }
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
+      // SV1: Log failed login attempt
+      await logActivityDirect({
+        userId: user._id,
+        userEmail: user.email,
+        userName: user.name,
+        action: 'login',
+        ipAddress: ipAddress,
+        userAgent: req.headers['user-agent'],
+        endpoint: req.path,
+        method: req.method,
+        statusCode: 401,
+        success: false,
+        errorMessage: 'Email hoặc mật khẩu không chính xác'
+      });
       return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
     }
 
@@ -99,9 +128,22 @@ const login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken();
     
-    // Lưu Refresh Token vào database
-    const ipAddress = getIpAddress(req);
+    // Lưu Refresh Token vào database (ipAddress đã được lấy ở trên)
     await saveRefreshToken(user._id, refreshToken, ipAddress);
+
+    // SV1: Log activity login thành công
+    await logActivityDirect({
+      userId: user._id,
+      userEmail: user.email,
+      userName: user.name,
+      action: 'login',
+      ipAddress: ipAddress,
+      userAgent: req.headers['user-agent'],
+      endpoint: req.path,
+      method: req.method,
+      statusCode: 200,
+      success: true
+    });
 
     console.log('🔐 User đăng nhập:', user.email);
 
