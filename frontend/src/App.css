@@ -1,0 +1,85 @@
+/* 📋 Bảng danh sách người dùng */
+.user-table {
+  width: 90%;
+  max-width: 900px;          /* Giới hạn chiều rộng tối đa */
+  margin: 20px auto;         /* Căn giữa bảng */
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+}
+
+/* Header của bảng */
+.user-table thead {
+  background-color: #f5f6fa;
+  color: #333;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Ô dữ liệu */
+.user-table th,
+.user-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Dòng xen kẽ màu nhẹ */
+.user-table tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+/* Hover row hiệu ứng nhẹ */
+.user-table tbody tr:hover {
+  background-color: #f1f7ff;
+  transition: background-color 0.2s ease;
+}
+
+/* Cột hành động */
+.user-table td:last-child {
+  text-align: right;
+  min-width: 150px;
+}
+
+/* Nút hành động */
+.action-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.action-btn--edit {
+  background-color: #007bff;
+}
+
+.action-btn--delete {
+  background-color: #dc3545;
+}
+
+.action-btn--edit:hover {
+  background-color: #0066d2;
+}
+
+.action-btn--delete:hover {
+  background-color: #bb2d3b;
+}
+
+/* Tiêu đề “Danh sách người dùng” */
+h3 {
+  width: 90%;
+  max-width: 900px;
+  margin: 0 auto;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #444;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+

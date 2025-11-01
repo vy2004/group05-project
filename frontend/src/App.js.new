@@ -1,0 +1,40 @@
+import { useState } from "react";
+import AddUser from "./components/AddUser";
+import UserList from "./components/UserList";
+import "./App.css";
+
+function App() {
+  const [reloadSignal, setReloadSignal] = useState(0);
+
+  // 🔄 Trigger reload bằng cách tăng counter
+  const triggerReload = () => {
+    setReloadSignal(prev => prev + 1);
+  };
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <h1>📚 Quản lý User (Frontend React + MongoDB)</h1>
+      </header>
+      
+      <div className="main-container">
+        <aside className="sidebar">
+          <div className="card">
+            <h2>➕ Thêm user mới</h2>
+            <AddUser onSuccess={triggerReload} />
+          </div>
+        </aside>
+        
+        <main className="content">
+          <UserList reloadSignal={reloadSignal} onChanged={triggerReload} />
+        </main>
+      </div>
+
+      <footer className="app-footer">
+        <small>⚡ Validation: không để trống tên, email hợp lệ, tuổi > 0.</small>
+      </footer>
+    </div>
+  );
+}
+
+export default App;

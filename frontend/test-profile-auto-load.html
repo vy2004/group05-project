@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Profile Auto Load</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-title {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .test-steps {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .test-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .test-steps li {
+            margin-bottom: 8px;
+        }
+        .expected-result {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Profile Auto Load Feature</h1>
+        
+        <div class="test-section">
+            <h2 class="test-title">Tính năng mới: Auto Load Profile Data</h2>
+            <p class="test-description">
+                Profile component giờ đây sẽ tự động load dữ liệu mới nhất từ server khi được hiển thị, 
+                thay vì chỉ dựa vào dữ liệu đã lưu trong localStorage.
+            </p>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Các thay đổi đã thực hiện:</h2>
+            <div class="test-steps">
+                <ol>
+                    <li><strong>Auto-load khi mount:</strong> Component Profile sẽ tự động gọi API GET /profile khi được hiển thị</li>
+                    <li><strong>Loading state:</strong> Hiển thị spinner "Đang tải thông tin profile..." trong khi fetch dữ liệu</li>
+                    <li><strong>Error handling:</strong> Xử lý lỗi khi không load được dữ liệu với fallback về dữ liệu cũ</li>
+                    <li><strong>Real-time update:</strong> Cập nhật localStorage và thông báo component cha khi có dữ liệu mới</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Cách test tính năng:</h2>
+            <div class="test-steps">
+                <ol>
+                    <li>Đăng nhập vào tài khoản</li>
+                    <li>Vào trang Profile - sẽ thấy loading spinner</li>
+                    <li>Dữ liệu profile sẽ được load tự động từ server</li>
+                    <li>Chỉnh sửa thông tin profile ở tab khác hoặc API khác</li>
+                    <li>Quay lại trang Profile - dữ liệu sẽ được refresh tự động</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Kết quả mong đợi:</h2>
+            <div class="expected-result">
+                <strong>✅ Thành công:</strong>
+                <ul>
+                    <li>Khi vào trang Profile, thông tin sẽ được load tự động từ server</li>
+                    <li>Hiển thị loading spinner trong khi đang fetch dữ liệu</li>
+                    <li>Dữ liệu mới nhất sẽ được hiển thị ngay lập tức</li>
+                    <li>Không cần bấm "Chỉnh sửa thông tin" để xem dữ liệu cập nhật</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Xử lý lỗi:</h2>
+            <div class="note">
+                <strong>⚠️ Lưu ý:</strong>
+                <ul>
+                    <li>Nếu API lỗi, sẽ hiển thị thông báo cảnh báo nhưng vẫn dùng dữ liệu cũ</li>
+                    <li>Nếu không có dữ liệu cũ và API lỗi, sẽ hiển thị màn hình lỗi với nút "Thử lại"</li>
+                    <li>Loading state sẽ được hiển thị trong suốt quá trình fetch dữ liệu</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">API Endpoint được sử dụng:</h2>
+            <div class="test-steps">
+                <p><strong>GET /profile</strong> - Lấy thông tin profile của user hiện tại</p>
+                <p><strong>Headers:</strong> Authorization: Bearer {token}</p>
+                <p><strong>Response:</strong> { message: "...", user: { ... } }</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Các file đã được sửa đổi:</h2>
+            <div class="test-steps">
+                <ul>
+                    <li><strong>Profile.jsx:</strong> Thêm auto-load logic, loading state, error handling</li>
+                    <li><strong>Profile.css:</strong> Thêm animation cho loading spinner</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

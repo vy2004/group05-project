@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto Fix Authentication</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        .status { 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .loading { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        button:hover { background: #0056b3; transform: translateY(-2px); }
+        .auto-fix { background: #28a745; }
+        .auto-fix:hover { background: #1e7e34; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Auto Fix Authentication</h1>
+        <p>This will automatically fix all authentication issues in your project.</p>
+        
+        <div id="status"></div>
+        
+        <button class="auto-fix" onclick="autoFix()">🚀 AUTO FIX NOW</button>
+        <button onclick="goToApp()">📱 Go to App</button>
+    </div>
+    
+    <script>
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        async function autoFix() {
+            try {
+                showStatus('🔄 Starting auto fix...', 'loading');
+                
+                // Step 1: Clear all storage
+                showStatus('🧹 Clearing old data...', 'loading');
+                localStorage.clear();
+                sessionStorage.clear();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Step 2: Test backend
+                showStatus('🔍 Testing backend connection...', 'loading');
+                const testResponse = await fetch('http://localhost:3000/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'admin@example.com', password: 'admin123' })
+                });
+                
+                if (!testResponse.ok) {
+                    throw new Error('Backend not responding');
+                }
+                
+                // Step 3: Get new token
+                showStatus('🔑 Getting new authentication token...', 'loading');
+                const loginResponse = await fetch('http://localhost:3000/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'admin@example.com', password: 'admin123' })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (!loginData.token) {
+                    throw new Error('Failed to get token: ' + (loginData.message || 'Unknown error'));
+                }
+                
+                // Step 4: Save new token
+                showStatus('💾 Saving new token...', 'loading');
+                localStorage.setItem('jwt_token', loginData.token);
+                localStorage.setItem('current_user', JSON.stringify(loginData.user));
+                
+                // Step 5: Test API with new token
+                showStatus('🧪 Testing API with new token...', 'loading');
+                const testApiResponse = await fetch('http://localhost:3000/users', {
+                    headers: { 'Authorization': `Bearer ${loginData.token}` }
+                });
+                
+                if (testApiResponse.ok) {
+                    showStatus('✅ AUTO FIX COMPLETED SUCCESSFULLY!<br>All authentication issues have been resolved.', 'success');
+                } else {
+                    showStatus('⚠️ Token saved but API test failed. Try refreshing the app.', 'error');
+                }
+                
+            } catch (error) {
+                showStatus(`❌ Auto fix failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function goToApp() {
+            window.location.href = 'http://localhost:3001';
+        }
+        
+        // Auto run on page load
+        window.onload = function() {
+            showStatus('Ready to auto fix! Click the button above.', 'info');
+        };
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

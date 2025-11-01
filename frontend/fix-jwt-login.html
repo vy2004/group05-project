@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Storage & Re-login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success-section {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .warning-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button-danger {
+            background: #dc3545;
+        }
+        .button-danger:hover {
+            background: #c82333;
+        }
+        .button-success {
+            background: #28a745;
+        }
+        .button-success:hover {
+            background: #218838;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix JWT Token Error</h1>
+        
+        <div class="success-section">
+            <h2>✅ Đã sửa lỗi JWT:</h2>
+            <ul>
+                <li><strong>JWT_SECRET:</strong> Đã cập nhật về secret cũ: <code>group05-super-secret-jwt-key-2024</code></li>
+                <li><strong>Backend Server:</strong> Đã restart với cấu hình mới</li>
+                <li><strong>Cloudinary:</strong> Vẫn hoạt động bình thường</li>
+            </ul>
+        </div>
+
+        <div class="warning-section">
+            <h2>⚠️ Cần thực hiện:</h2>
+            <p>Token hiện tại trong localStorage có thể vẫn bị lỗi. Bạn cần:</p>
+            <ol>
+                <li>Clear localStorage để xóa token cũ</li>
+                <li>Đăng nhập lại để tạo token mới</li>
+                <li>Test Cloudinary upload</li>
+            </ol>
+        </div>
+
+        <h2>🚀 Các bước thực hiện:</h2>
+        
+        <h3>Bước 1: Clear LocalStorage</h3>
+        <p>Mở Developer Tools (F12) và chạy lệnh sau:</p>
+        <div class="code-block">
+localStorage.clear();<br>
+sessionStorage.clear();<br>
+console.log('✅ Đã clear localStorage');
+        </div>
+        
+        <button class="button button-danger" onclick="clearStorage()">🗑️ Clear Storage</button>
+        
+        <h3>Bước 2: Đăng nhập lại</h3>
+        <p>Sau khi clear storage, đăng nhập lại vào ứng dụng:</p>
+        <button class="button button-success" onclick="goToLogin()">🔑 Đăng nhập lại</button>
+        
+        <h3>Bước 3: Test Cloudinary</h3>
+        <p>Sau khi đăng nhập thành công:</p>
+        <ol>
+            <li>Vào trang Profile</li>
+            <li>Upload avatar mới</li>
+            <li>Kiểm tra URL avatar có dạng Cloudinary</li>
+        </ol>
+        
+        <button class="button" onclick="goToProfile()">👤 Vào Profile</button>
+
+        <h2>🔍 Kiểm tra kết quả:</h2>
+        <div class="code-block">
+✅ Token mới sẽ được tạo với JWT_SECRET đúng<br>
+✅ API calls sẽ không còn lỗi 401<br>
+✅ Avatar upload sẽ lên Cloudinary<br>
+✅ URL avatar: https://res.cloudinary.com/duliaritw/image/upload/...
+        </div>
+
+        <h2>📞 Nếu vẫn có lỗi:</h2>
+        <ol>
+            <li>Kiểm tra backend server có chạy không</li>
+            <li>Kiểm tra file .env có đúng không</li>
+            <li>Thử đăng nhập với tài khoản khác</li>
+            <li>Kiểm tra console log để xem chi tiết lỗi</li>
+        </ol>
+    </div>
+
+    <script>
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert('✅ Đã clear localStorage và sessionStorage!\nBây giờ hãy đăng nhập lại.');
+        }
+        
+        function goToLogin() {
+            // Redirect to login page
+            window.location.href = '/';
+        }
+        
+        function goToProfile() {
+            // Check if user is logged in
+            const token = localStorage.getItem('jwt_token');
+            if (!token) {
+                alert('❌ Bạn chưa đăng nhập!\nHãy đăng nhập trước.');
+                return;
+            }
+            
+            // Redirect to profile (assuming you have a profile route)
+            alert('✅ Đã đăng nhập!\nBây giờ bạn có thể vào Profile để test Cloudinary upload.');
+        }
+        
+        // Auto-check if user is logged in
+        window.onload = function() {
+            const token = localStorage.getItem('jwt_token');
+            const user = localStorage.getItem('current_user');
+            
+            if (token && user) {
+                console.log('✅ User đã đăng nhập');
+                console.log('Token:', token.substring(0, 50) + '...');
+                console.log('User:', JSON.parse(user));
+            } else {
+                console.log('❌ User chưa đăng nhập');
+            }
+        };
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,154 @@
+.permissions-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.permissions-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+}
+
+.permissions-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 30px 0;
+  text-align: center;
+}
+
+.current-role-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.role-label {
+  font-size: 1.1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.permissions-details h3 {
+  font-size: 1.3rem;
+  color: #333;
+  margin: 0 0 20px 0;
+  font-weight: 600;
+}
+
+.permissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.permission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.permission-item:hover {
+  background: #e9ecef;
+  transform: translateX(5px);
+}
+
+.permission-name {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.permission-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.permission-status.granted {
+  color: #28a745;
+}
+
+.permission-status.denied {
+  color: #dc3545;
+}
+
+.status-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.status-text {
+  font-size: 1rem;
+}
+
+.permission-note {
+  margin-top: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 8px;
+  border-left: 4px solid #2196f3;
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.note-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.permission-note p {
+  margin: 0;
+  font-size: 1rem;
+  color: #1976d2;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .permissions-container {
+    padding: 10px;
+  }
+
+  .permissions-card {
+    padding: 20px;
+  }
+
+  .permissions-title {
+    font-size: 1.5rem;
+  }
+
+  .permission-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .permission-status {
+    align-self: flex-end;
+  }
+}
+
+
