@@ -60,6 +60,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 // Cập nhật user theo id (Admin hoặc Moderator sửa user thường, hoặc tự sửa)
 router.put('/:id', xacThuc, kiemTraQuyenSuaUser, async (req, res) => {
   try {

@@ -14,6 +14,7 @@ const authRoutes = require("./routes/auth");
 const avatarRoutes = require("./routes/avatar");
 const profileRoutes = require("./routes/profile");
 const passwordRoutes = require("./routes/password");
+
 const app = express();
 
 // ✅ Cho phép frontend React (port 3001) gọi API
