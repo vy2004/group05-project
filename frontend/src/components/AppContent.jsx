@@ -1,19 +1,23 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
-import AddUser from "./AddUser";
-import UserList from "./UserList";
+import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import SignUp from "./SignUp";
 import Login from "./Login";
-import AdminPanel from "./AdminPanel";
+import RoleManagement from "./RoleManagement";
+import UserManagement from "./UserManagement";
 import Profile from "./Profile";
 import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
 import UploadAvatar from "./UploadAvatar";
+import Permissions from "./Permissions";
 import api from "../services/api";
+
+// Component để redirect /login về /
+function LoginRedirect() {
+  return <Navigate to="/" replace />;
+}
 
 function AppContent() {
   const navigate = useNavigate();
-  const [reloadSignal, setReloadSignal] = useState(0);
   const [profileKey, setProfileKey] = useState(0); // Để force reload Profile
   const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null));
   const [isLogin, setIsLogin] = useState(true); // true = show login, false = show signup
@@ -31,12 +35,14 @@ function AppContent() {
       const savedUser = localStorage.getItem('current_user');
       if (savedUser) {
         const user = JSON.parse(savedUser);
-        return user.role === 'admin' ? 'admin' : 'user';
+        return (user.role === 'admin' || user.role === 'moderator') ? 'role' : 'user';
       }
     }
     return 'auth';
   });
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
 
   // ✅ Set token vào axios headers khi app khởi động
   useEffect(() => {
@@ -46,6 +52,28 @@ function AppContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Hiển thị thông báo đăng nhập thành công 5 giây
+  useEffect(() => {
+    if (showLoginSuccess) {
+      const timer = setTimeout(() => {
+        setShowLoginSuccess(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showLoginSuccess]);
+
+  // Đóng menu khi click bên ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMenu && !event.target.closest('.menu-container')) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -106,6 +134,22 @@ function AppContent() {
     console.log('✅ AppContent updated currentUser state');
   };
 
+  // Đóng menu khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMenu && !event.target.closest('.menu-container')) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showMenu]);
+
   return (
     <div className="App" style={{ 
       minHeight: '100vh',
@@ -114,9 +158,40 @@ function AppContent() {
       alignItems: 'center',
       background: '#f0f2f5'
     }}>
+      {/* Toast notification đăng nhập thành công */}
+      {showLoginSuccess && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          color: '#0f5132',
+          background: '#d1e7dd',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          ✅ Đã đăng nhập thành công! 
+          {currentUser && (
+            <span>
+              ({currentUser.role === 'admin' ? '👑 Admin' : currentUser.role === 'moderator' ? '🛡️ Moderator' : '👤 User'}: {currentUser.name})
+            </span>
+          )}
+        </div>
+      )}
+      
       {/* Route cho Reset Password */}
       <Routes>
         <Route path="/reset-password" element={<ResetPassword />} />
+        
+        {/* Route cho /login - redirect to home */}
+        <Route path="/login" element={
+          <LoginRedirect />
+        } />
         
         {/* Route cho trang chính */}
         <Route path="/" element={
@@ -182,8 +257,9 @@ function AppContent() {
                           api.setAuthToken(token); 
                           setToken(token);
                           setCurrentUser(user);
+                          setShowLoginSuccess(true);
                           // Xác định view dựa trên role
-                          setCurrentView(user.role === 'admin' ? 'admin' : 'user');
+                          setCurrentView((user.role === 'admin' || user.role === 'moderator') ? 'role' : 'user');
                         }} 
                         onForgotPassword={() => setShowForgotPassword(true)}
                       />
@@ -205,118 +281,189 @@ function AppContent() {
               </div>
             )}
 
-            {/* Hiển thị thanh điều hướng khi đã đăng nhập */}
-            {token && (
-              <div style={{
-                background: 'white',
-                padding: '20px 40px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                marginTop: '20px',
-                width: '100%',
-                maxWidth: '1200px',
-              }}>
-                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                  <div style={{ color: '#0f5132', background: '#d1e7dd', padding: 8, borderRadius: 4, marginBottom: 8 }}>
-                    Đã đăng nhập thành công! 
-                    {currentUser && (
-                      <span style={{ marginLeft: 8 }}>
-                        ({currentUser.role === 'admin' ? '👑 Admin' : '👤 User'}: {currentUser.name})
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: 10 }}>
-                    {currentUser?.role === 'admin' && (
-                      <button 
-                        onClick={() => setCurrentView('admin')}
-                        style={{
-                          background: currentView === 'admin' ? '#007bff' : '#e9ecef',
-                          color: currentView === 'admin' ? 'white' : '#333',
-                          border: 'none',
-                          padding: '8px 16px',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        🔧 Admin Panel
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => {
-                        setCurrentView('user');
-                        // Force reload Profile component
-                        setProfileKey(prev => prev + 1);
-                      }}
-                      style={{
-                        background: currentView === 'user' ? '#007bff' : '#e9ecef',
-                        color: currentView === 'user' ? 'white' : '#333',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {currentUser?.role === 'admin' ? '👥 Quản lý User' : '👤 Hồ sơ cá nhân'}
-                    </button>
-                    <button 
-                      onClick={() => setCurrentView('avatar')}
-                      style={{
-                        background: currentView === 'avatar' ? '#007bff' : '#e9ecef',
-                        color: currentView === 'avatar' ? 'white' : '#333',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      📸 Avatar
-                    </button>
-                  </div>
-                  <button 
-                    onClick={handleLogout}
-                    style={{
-                      background: '#dc3545',
-                      color: 'white',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Đăng xuất
-                  </button>
-                </div>
+            {/* Hiển thị RoleManagement hoặc UserManagement hoặc UploadAvatar dựa trên currentView */}
+            {token && currentView === 'role' && (
+              <div style={{ width: '100%', marginTop: '20px' }}>
+                <RoleManagement 
+                  showMenu={showMenu}
+                  setShowMenu={setShowMenu}
+                  setCurrentView={setCurrentView}
+                  setProfileKey={setProfileKey}
+                  handleLogout={handleLogout}
+                  currentUser={currentUser}
+                />
               </div>
             )}
 
-            {/* Hiển thị AdminPanel hoặc UserList hoặc UploadAvatar dựa trên currentView */}
-            {token && currentView === 'admin' && (
+            {token && currentView === 'usermgmt' && (
               <div style={{ width: '100%', marginTop: '20px' }}>
-                <AdminPanel />
+                <UserManagement 
+                  showMenu={showMenu}
+                  setShowMenu={setShowMenu}
+                  setCurrentView={setCurrentView}
+                  setProfileKey={setProfileKey}
+                  handleLogout={handleLogout}
+                  currentUser={currentUser}
+                />
               </div>
             )}
 
             {token && currentView === 'user' && (
               <div style={{ width: '100%', marginTop: '20px' }}>
-                {currentUser?.role === 'admin' ? (
-                  <div style={{
-                    background: 'white',
-                    padding: '30px 40px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    maxWidth: '800px',
-                    margin: '0 auto'
-                  }}>
-                    <AddUser onUserAdded={() => setReloadSignal(prev => prev + 1)} />
-                    <UserList reloadSignal={reloadSignal} />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', padding: '0 20px' }}>
+                  <div className="menu-container" style={{ position: 'relative' }}>
+                    <button 
+                      onClick={() => setShowMenu(!showMenu)}
+                      style={{
+                        background: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '1.2rem'
+                      }}
+                    >
+                      ☰
+                    </button>
+                    {showMenu && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '8px',
+                        background: 'white',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        zIndex: 1000,
+                        minWidth: '200px'
+                      }}>
+                        {currentUser?.role === 'admin' && (
+                          <button 
+                            onClick={() => {
+                              setCurrentView('role');
+                              setShowMenu(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              border: 'none',
+                              background: 'white',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #eee',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                          >
+                            🔧 Quản Lý Phân Quyền
+                          </button>
+                        )}
+                        {(currentUser?.role === 'admin' || currentUser?.role === 'moderator') && (
+                          <button 
+                            onClick={() => {
+                              setCurrentView('usermgmt');
+                              setShowMenu(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              border: 'none',
+                              background: 'white',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #eee',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                          >
+                            👥 Quản Lý User
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => {
+                            setCurrentView('permissions');
+                            setShowMenu(false);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: 'none',
+                            background: 'white',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #eee',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                          onMouseLeave={(e) => e.target.style.background = 'white'}
+                        >
+                          🔐 Quyền hạn
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setCurrentView('user');
+                            setProfileKey(prev => prev + 1);
+                            setShowMenu(false);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: 'none',
+                            background: 'white',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #eee',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                          onMouseLeave={(e) => e.target.style.background = 'white'}
+                        >
+                          ℹ️ Thông tin
+                        </button>
+                        <button 
+                          onClick={() => {
+                            handleLogout();
+                            setShowMenu(false);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: 'none',
+                            background: 'white',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            color: '#dc3545',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#fff5f5'}
+                          onMouseLeave={(e) => e.target.style.background = 'white'}
+                        >
+                          🚪 Đăng xuất
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <Profile 
-                    key={`profile-${profileKey}`}
-                    currentUser={currentUser} 
-                    onUserUpdate={handleAvatarUpdate}
-                  />
-                )}
+                </div>
+                <Profile 
+                  key={`profile-${profileKey}`}
+                  currentUser={currentUser} 
+                  onUserUpdate={handleAvatarUpdate}
+                  setCurrentView={setCurrentView}
+                />
               </div>
             )}
 
@@ -325,12 +472,174 @@ function AppContent() {
                 <UploadAvatar 
                   currentUser={currentUser} 
                   onAvatarUpdate={handleAvatarUpdate}
+                  setCurrentView={setCurrentView}
                   onUploadSuccess={() => {
                     // Sau khi upload thành công, chuyển sang tab Profile
                     console.log('✅ Upload success! Switching to Profile tab...');
                     setCurrentView('user');
                     setProfileKey(prev => prev + 1); // Force reload Profile
                   }}
+                />
+              </div>
+            )}
+
+            {token && currentView === 'permissions' && (
+              <div style={{ width: '100%', marginTop: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', padding: '0 20px' }}>
+                  <div className="menu-container" style={{ position: 'relative' }}>
+                    <button 
+                      onClick={() => setShowMenu(!showMenu)}
+                      style={{
+                        background: '#007bff',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '1.2rem'
+                      }}
+                    >
+                      ☰
+                    </button>
+                    {showMenu && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '8px',
+                        background: 'white',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        zIndex: 1000,
+                        minWidth: '200px'
+                      }}>
+                        {currentUser?.role === 'admin' && (
+                          <button 
+                            onClick={() => {
+                              setCurrentView('role');
+                              setShowMenu(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              border: 'none',
+                              background: 'white',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #eee',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                          >
+                            🔧 Quản Lý Phân Quyền
+                          </button>
+                        )}
+                        {(currentUser?.role === 'admin' || currentUser?.role === 'moderator') && (
+                          <button 
+                            onClick={() => {
+                              setCurrentView('usermgmt');
+                              setShowMenu(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              border: 'none',
+                              background: 'white',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #eee',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                          >
+                            👥 Quản Lý User
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => {
+                            setCurrentView('permissions');
+                            setShowMenu(false);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: 'none',
+                            background: 'white',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #eee',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                          onMouseLeave={(e) => e.target.style.background = 'white'}
+                        >
+                          🔐 Quyền hạn
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setCurrentView('user');
+                            setProfileKey(prev => prev + 1);
+                            setShowMenu(false);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: 'none',
+                            background: 'white',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #eee',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                          onMouseLeave={(e) => e.target.style.background = 'white'}
+                        >
+                          ℹ️ Thông tin
+                        </button>
+                        <button 
+                          onClick={() => {
+                            handleLogout();
+                            setShowMenu(false);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: 'none',
+                            background: 'white',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            color: '#dc3545',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#fff5f5'}
+                          onMouseLeave={(e) => e.target.style.background = 'white'}
+                        >
+                          🚪 Đăng xuất
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Permissions 
+                  currentUser={currentUser}
+                  showMenu={showMenu}
+                  setShowMenu={setShowMenu}
+                  setCurrentView={setCurrentView}
+                  setProfileKey={setProfileKey}
+                  handleLogout={handleLogout}
                 />
               </div>
             )}

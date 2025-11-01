@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import api from '../services/api';
 import './UploadAvatar.css';
 
-const UploadAvatar = ({ currentUser, onAvatarUpdate }) => {
+const UploadAvatar = ({ currentUser, onAvatarUpdate, onUploadSuccess, setCurrentView }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(currentUser?.avatar || '');
   const [isUploading, setIsUploading] = useState(false);
@@ -64,15 +64,41 @@ const UploadAvatar = ({ currentUser, onAvatarUpdate }) => {
         setMessage(response.data.message);
         setIsSuccess(true);
         setSelectedFile(null);
-        
-        // Cập nhật avatar cho user
-        if (onAvatarUpdate) {
-          onAvatarUpdate(response.data.data.user);
+
+        // Cập nhật preview ngay lập tức bằng URL Cloudinary mới
+        if (response?.data?.data?.user?.avatar) {
+          setPreview(response.data.data.user.avatar);
         }
-        
+
+        // Lưu user mới vào localStorage để các trang khác đọc được
+        try {
+          const updatedUser = response.data.data.user;
+          console.log('✅ Avatar uploaded successfully, user data:', updatedUser);
+          localStorage.setItem('current_user', JSON.stringify(updatedUser));
+          console.log('✅ Saved to localStorage');
+        } catch (e) {
+          console.error('❌ Error saving to localStorage:', e);
+        }
+
+        // Cập nhật dữ liệu lên component cha (nếu truyền vào)
+        if (onAvatarUpdate) {
+          console.log('✅ Calling onAvatarUpdate with user:', response.data.data.user);
+          onAvatarUpdate(response.data.data.user);
+        } else {
+          console.warn('⚠️ onAvatarUpdate callback not provided');
+        }
+
         // Reset file input
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
+        }
+
+        // Tự động chuyển sang tab Profile sau 1 giây để user thấy thông báo thành công
+        if (onUploadSuccess) {
+          setTimeout(() => {
+            console.log('🎯 Chuyển sang tab Profile...');
+            onUploadSuccess();
+          }, 1500);
         }
       } else {
         setMessage(response.data.message);
@@ -136,7 +162,30 @@ const UploadAvatar = ({ currentUser, onAvatarUpdate }) => {
   return (
     <div className="upload-avatar-container">
       <div className="upload-avatar-card">
-        <h3>📸 Quản Lý Avatar</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+          <button
+            onClick={() => setCurrentView('user')}
+            className="back-button"
+            style={{
+              background: '#f8f9fa',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              cursor: 'pointer',
+              fontSize: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              color: '#333'
+            }}
+          >
+            ←
+          </button>
+          <h3 style={{ margin: 0 }}>📸 Quản Lý Avatar</h3>
+        </div>
         
         {/* Hiển thị avatar hiện tại */}
         <div className="current-avatar">
@@ -237,4 +286,7 @@ const UploadAvatar = ({ currentUser, onAvatarUpdate }) => {
 };
 
 export default UploadAvatar;
+
+
+
 
