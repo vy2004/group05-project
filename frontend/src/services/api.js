@@ -167,4 +167,18 @@ export const removeAvatar = async () => {
   return res.data;
 };
 
+// ==================== RBAC API FUNCTIONS ====================
+
+// Cập nhật role của user (chỉ Admin)
+export const updateUserRole = async (userId, role) => {
+  const res = await api.patch(`/users/${userId}/role`, { role });
+  return res.data;
+};
+
+// Lấy danh sách admins/moderators
+export const getAdmins = async () => {
+  const res = await api.get('/users/admins');
+  return res.data;
+};
+
 export default api;

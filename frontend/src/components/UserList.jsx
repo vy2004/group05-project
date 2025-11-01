@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 
-export default function UserList({ reloadSignal, onChanged }) {
+export default function UserList({ reloadSignal, onChanged, currentUser }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
@@ -13,7 +13,8 @@ export default function UserList({ reloadSignal, onChanged }) {
     setLoading(true);
     try {
       const res = await api.get("/users");
-      setUsers(res.data || []);
+      // Backend trả về { users: [...], total: ... }
+      setUsers(res.data.users || res.data || []);
     } catch (err) {
       console.error("❌ Lỗi khi tải danh sách user:", err);
       setUsers([]);
@@ -216,18 +217,20 @@ export default function UserList({ reloadSignal, onChanged }) {
                       >
                         ✏️ Sửa
                       </button>
-                      <button
-                        onClick={() => handleDelete(id)}
-                        style={{
-                          background: "#dc3545",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: 5,
-                          padding: "6px 10px",
-                        }}
-                      >
-                        🗑️ Xóa
-                      </button>
+                      {currentUser?.role === 'admin' && (
+                        <button
+                          onClick={() => handleDelete(id)}
+                          style={{
+                            background: "#dc3545",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: 5,
+                            padding: "6px 10px",
+                          }}
+                        >
+                          🗑️ Xóa
+                        </button>
+                      )}
                     </>
                   )}
                 </td>
