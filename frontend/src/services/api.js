@@ -191,4 +191,37 @@ export const getAdmins = async () => {
   return res.data;
 };
 
+// ==================== ACTIVITY LOGS API FUNCTIONS (SV2) ====================
+
+// Lấy danh sách activity logs (chỉ Admin)
+export const getActivityLogs = async (params = {}) => {
+  const queryParams = new URLSearchParams(params).toString();
+  const res = await api.get(`/logs?${queryParams}`);
+  return res.data;
+};
+
+// Lấy thống kê activity logs
+export const getLogStats = async (days = 7) => {
+  const res = await api.get(`/logs/stats?days=${days}`);
+  return res.data;
+};
+
+// Lấy chi tiết một log
+export const getLogById = async (logId) => {
+  const res = await api.get(`/logs/${logId}`);
+  return res.data;
+};
+
+// Xóa một log
+export const deleteLog = async (logId) => {
+  const res = await api.delete(`/logs/${logId}`);
+  return res.data;
+};
+
+// Xóa nhiều logs
+export const deleteLogs = async (ids) => {
+  const res = await api.delete('/logs', { data: { ids } });
+  return res.data;
+};
+
 export default api;

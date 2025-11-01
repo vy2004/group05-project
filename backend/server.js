@@ -14,6 +14,7 @@ const authRoutes = require("./routes/auth");
 const avatarRoutes = require("./routes/avatar");
 const profileRoutes = require("./routes/profile");
 const passwordRoutes = require("./routes/password");
+const logRoutes = require("./routes/logs"); // SV3: Activity logs routes
 
 const app = express();
 
@@ -117,6 +118,8 @@ app.use("/profile", profileRoutes);
 app.use("/avatar", avatarRoutes);
 // ✅ Dùng routes/password.js cho quên/reset mật khẩu
 app.use("/password", passwordRoutes);
+// ✅ Dùng routes/logs.js cho activity logs (SV3)
+app.use("/logs", logRoutes);
 
 // ✅ Khởi động backend server
 const PORT = process.env.PORT || 3000;
