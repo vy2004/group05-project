@@ -108,6 +108,30 @@ const UserManagement = ({ showMenu, setShowMenu, setCurrentView, setProfileKey, 
               >
                 🔐 Quyền hạn
               </button>
+              {currentUser?.role === 'admin' && (
+                <button 
+                  onClick={() => {
+                    setCurrentView('logs');
+                    setShowMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: 'white',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                  onMouseLeave={(e) => e.target.style.background = 'white'}
+                >
+                  📊 Xem Log
+                </button>
+              )}
               <button 
                 onClick={() => {
                   setCurrentView('user');

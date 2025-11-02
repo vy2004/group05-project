@@ -9,7 +9,12 @@ import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
 import UploadAvatar from "./UploadAvatar";
 import Permissions from "./Permissions";
+import ProtectedRoute from "./ProtectedRoute"; // SV2: Protected Route
+import AdminPanel from "./AdminPanel"; // For admin panel
+import ActivityLogs from "./ActivityLogs"; // SV2: Activity logs component
 import api from "../services/api";
+import { useAppSelector, useAppDispatch } from "../store/hooks"; // SV2: Redux hooks
+import { logoutUser, checkAuth } from "../store/thunks/authThunks"; // SV2: Redux thunks
 
 // Component để redirect /login về /
 function LoginRedirect() {
@@ -17,18 +22,32 @@ function LoginRedirect() {
 }
 
 function AppContent() {
+  // SV2: Redux hooks
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user: reduxUser, token: reduxToken } = useAppSelector((state) => state.auth);
+  
   const navigate = useNavigate();
   const [profileKey, setProfileKey] = useState(0); // Để force reload Profile
-  const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null));
-  const [isLogin, setIsLogin] = useState(true); // true = show login, false = show signup
-  const [currentUser, setCurrentUser] = useState(() => {
-    // Khôi phục thông tin user từ localStorage khi khởi động
+  // SV2: Sử dụng Redux state, fallback về localStorage cho backward compatibility
+  const token = reduxToken || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+  const currentUser = reduxUser || (() => {
+    // Fallback cho backward compatibility
     if (typeof window !== 'undefined') {
       const savedUser = localStorage.getItem('current_user');
       return savedUser ? JSON.parse(savedUser) : null;
     }
     return null;
-  });
+  })();
+  const [isLogin, setIsLogin] = useState(true); // true = show login, false = show signup
+  // Legacy state để tương thích (sẽ được sync với Redux)
+  const [, setToken] = useState(token);
+  const [, setCurrentUserState] = useState(currentUser);
+  
+  // Helper để sync cả Redux và legacy state
+  const setCurrentUser = (user) => {
+    setCurrentUserState(user);
+    // Redux sẽ tự sync qua loginSuccess action
+  };
   const [currentView, setCurrentView] = useState(() => {
     // Xác định view ban đầu dựa trên role của user đã lưu
     if (typeof window !== 'undefined') {
@@ -44,9 +63,12 @@ function AppContent() {
   const [showMenu, setShowMenu] = useState(false);
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
 
-  // ✅ Set token vào axios headers khi app khởi động
+  // SV2: Kiểm tra auth khi app khởi động với Redux
   useEffect(() => {
-    if (token) {
+    // Check auth từ Redux store
+    if (!isAuthenticated && token) {
+      dispatch(checkAuth());
+    } else if (token) {
       api.setAuthToken(token);
       console.log('✅ Restored access token from localStorage');
     }
@@ -75,62 +97,32 @@ function AppContent() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMenu]);
 
+  // SV2: Sử dụng Redux thunk cho logout
   const handleLogout = useCallback(async () => {
-    try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      
-      // ✅ Gọi API logout để revoke refresh token
-      if (refreshToken) {
-        await api.post('/auth/logout', { refreshToken });
-        console.log('✅ Refresh token revoked');
-      }
-    } catch (error) {
-      console.error('❌ Logout error:', error);
-    } finally {
-      // Clear all tokens
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('current_user');
-      sessionStorage.clear();
-      
-      // Clear axios header
-      api.setAuthToken(null);
-      
-      // Reset state
-      setToken(null);
-      setCurrentUser(null);
-      setCurrentView('auth');
-      navigate('/');
-      
-      console.log('✅ Logged out successfully');
-    }
-  }, [navigate]);
+    await dispatch(logoutUser());
+    // Reset local state (backward compatibility)
+    setToken(null);
+    setCurrentUser(null);
+    setCurrentView('auth');
+    navigate('/');
+    console.log('✅ Logged out successfully');
+  }, [dispatch, navigate]);
 
-  // Auto clear invalid tokens
+  // SV2: Auto clear invalid tokens - sử dụng Redux checkAuth
   useEffect(() => {
-    const checkToken = async () => {
-      if (token) {
-        try {
-          // ✅ Gọi /profile thay vì /users vì user thường không có quyền truy cập /users
-          const response = await api.get('/profile');
-          if (!response.data) {
-            handleLogout();
-          }
-        } catch (error) {
-          if (error.response?.status === 401) {
-            handleLogout();
-          }
-        }
-      }
-    };
-    
-    checkToken();
-  }, [token, handleLogout]);
+    if (token && !isAuthenticated) {
+      // Check auth với Redux
+      dispatch(checkAuth());
+    }
+  }, [token, isAuthenticated, dispatch]);
 
   const handleAvatarUpdate = (updatedUser) => {
     console.log('📥 AppContent received avatar update:', updatedUser);
-    setCurrentUser(updatedUser);
-    localStorage.setItem('current_user', JSON.stringify(updatedUser));
+    // SV2: Update cả Redux và local state
+    setCurrentUserState(updatedUser);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('current_user', JSON.stringify(updatedUser));
+    }
     console.log('✅ AppContent updated currentUser state');
   };
 
@@ -189,9 +181,40 @@ function AppContent() {
         <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* Route cho /login - redirect to home */}
-        <Route path="/login" element={
-          <LoginRedirect />
-        } />
+        <Route path="/login" element={<LoginRedirect />} />
+        
+        {/* SV2: Protected Route cho /profile - Yêu cầu authentication */}
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <div style={{ width: '100%', marginTop: '20px' }}>
+                <Profile 
+                  key={`profile-${profileKey}`}
+                  currentUser={currentUser} 
+                  onUserUpdate={handleAvatarUpdate}
+                  setCurrentView={setCurrentView}
+                />
+              </div>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* SV2: Protected Route cho /admin - Chỉ Admin mới vào được */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute requireAuth={true} allowedRoles={['admin']}>
+              <div style={{ width: '100%', marginTop: '20px' }}>
+                <AdminPanel 
+                  currentUser={currentUser}
+                  setCurrentView={setCurrentView}
+                  handleLogout={handleLogout}
+                />
+              </div>
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Route cho trang chính */}
         <Route path="/" element={
@@ -260,6 +283,7 @@ function AppContent() {
                           setShowLoginSuccess(true);
                           // Xác định view dựa trên role
                           setCurrentView((user.role === 'admin' || user.role === 'moderator') ? 'role' : 'user');
+                          // SV2: Sync với Redux (đã được xử lý trong thunk)
                         }} 
                         onForgotPassword={() => setShowForgotPassword(true)}
                       />
@@ -584,6 +608,30 @@ function AppContent() {
                         >
                           🔐 Quyền hạn
                         </button>
+                        {currentUser?.role === 'admin' && (
+                          <button 
+                            onClick={() => {
+                              setCurrentView('logs');
+                              setShowMenu(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              border: 'none',
+                              background: 'white',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #eee',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                          >
+                            📊 Xem Log
+                          </button>
+                        )}
                         <button 
                           onClick={() => {
                             setCurrentView('user');
@@ -634,6 +682,20 @@ function AppContent() {
                   </div>
                 </div>
                 <Permissions 
+                  currentUser={currentUser}
+                  showMenu={showMenu}
+                  setShowMenu={setShowMenu}
+                  setCurrentView={setCurrentView}
+                  setProfileKey={setProfileKey}
+                  handleLogout={handleLogout}
+                />
+              </div>
+            )}
+
+            {/* SV2: Hiển thị Activity Logs khi Admin click "Xem Log" */}
+            {token && currentView === 'logs' && currentUser?.role === 'admin' && (
+              <div style={{ width: '100%', marginTop: '20px' }}>
+                <ActivityLogs 
                   currentUser={currentUser}
                   showMenu={showMenu}
                   setShowMenu={setShowMenu}
