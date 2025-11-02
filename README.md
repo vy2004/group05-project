@@ -462,6 +462,28 @@ Frontend chạy tại: `http://localhost:3001`
 
 ---
 
+## 🚀 Deployment
+
+### Backend trên Render
+1. Push code lên GitHub
+2. Kết nối repo với Render
+3. Chọn `render.yaml` để auto-deploy
+4. Thêm Environment Variables trong Render Dashboard
+
+### Frontend trên Vercel
+1. Push code lên GitHub
+2. Kết nối repo với Vercel
+3. **QUAN TRỌNG:** Thêm Environment Variable:
+   - Key: `REACT_APP_API_URL`
+   - Value: `https://group05-project-18.onrender.com`
+4. Deploy
+
+📖 **Xem chi tiết:** 
+- `VERCEL_SETUP.md` - Hướng dẫn cấu hình Vercel
+- `REDEPLOY_INSTRUCTIONS.md` - Hướng dẫn fix lỗi deployment
+
+---
+
 ## 📞 Liên Hệ
 
 Nếu có vấn đề, vui lòng:

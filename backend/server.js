@@ -21,6 +21,7 @@ const app = express();
 // ✅ Cho phép frontend React gọi API (localhost + Vercel)
 const allowedOrigins = [
   "http://localhost:3001",
+  "http://192.168.1.7:3001",
   /^https:\/\/group05-project.*\.vercel\.app$/ // Cho phép tất cả Vercel preview URLs
 ];
 app.use(
