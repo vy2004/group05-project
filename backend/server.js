@@ -18,10 +18,33 @@ const logRoutes = require("./routes/logs"); // SV3: Activity logs routes
 
 const app = express();
 
-// ✅ Cho phép frontend React (port 3001) gọi API
+// ✅ Cho phép frontend React gọi API (localhost + Vercel)
+const allowedOrigins = [
+  "http://localhost:3001",
+  /^https:\/\/group05-project.*\.vercel\.app$/ // Cho phép tất cả Vercel preview URLs
+];
 app.use(
   cors({
-    origin: "http://localhost:3001", // frontend chạy ở port 3001
+    origin: function (origin, callback) {
+      // Cho phép requests không có origin (như Postman)
+      if (!origin) return callback(null, true);
+      
+      // Kiểm tra origin có trong danh sách allowed
+      const isAllowed = allowedOrigins.some(allowedOrigin => {
+        if (typeof allowedOrigin === 'string') {
+          return origin === allowedOrigin;
+        } else if (allowedOrigin instanceof RegExp) {
+          return allowedOrigin.test(origin);
+        }
+        return false;
+      });
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
