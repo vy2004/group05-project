@@ -1,6 +1,13 @@
 import axios from "axios";
 
-const baseURL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+// Lấy baseURL từ env và loại bỏ /api nếu có
+let baseURL = process.env.REACT_APP_API_URL || "http://localhost:3000";
+// Loại bỏ /api ở cuối nếu có (do lỗi cấu hình Vercel)
+if (baseURL.endsWith('/api')) {
+  baseURL = baseURL.replace(/\/api$/, '');
+}
+// Loại bỏ dấu / ở cuối
+baseURL = baseURL.replace(/\/$/, '');
 console.log('🔗 API Base URL:', baseURL);
 
 const api = axios.create({
@@ -78,7 +85,7 @@ api.interceptors.response.use(
         console.log('🔄 Access token expired, refreshing...');
         
         // Gọi API refresh (không dùng interceptor để tránh loop)
-        const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/auth/refresh`, {
+        const response = await axios.post(`${baseURL}/auth/refresh`, {
           refreshToken
         });
 
