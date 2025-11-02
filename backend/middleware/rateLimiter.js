@@ -29,7 +29,6 @@ const loginRateLimiter = rateLimit({
     return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
            req.connection?.remoteAddress ||
            req.socket?.remoteAddress ||
-           req.ip ||
            '0.0.0.0';
   },
   // Custom handler khi vượt quá limit
@@ -65,7 +64,11 @@ const forgotPasswordRateLimiter = rateLimit({
   keyGenerator: (req) => {
     // Dùng email nếu có, nếu không dùng IP
     const email = req.body?.email;
-    return email ? `forgot-password:${email.toLowerCase()}` : req.ip;
+    return email ? `forgot-password:${email.toLowerCase()}` : 
+           req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+           req.connection?.remoteAddress ||
+           req.socket?.remoteAddress ||
+           '0.0.0.0';
   },
   handler: (req, res) => {
     console.warn('⚠️  Rate limit exceeded for forgot password:', req.ip);
@@ -92,7 +95,11 @@ const apiRateLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     // Ưu tiên dùng userId nếu đã authenticate, nếu không dùng IP
-    return req.user?.userId ? `user:${req.user.userId}` : req.ip;
+    return req.user?.userId ? `user:${req.user.userId}` :
+           req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+           req.connection?.remoteAddress ||
+           req.socket?.remoteAddress ||
+           '0.0.0.0';
   }
 });
 
@@ -113,7 +120,6 @@ const signupRateLimiter = rateLimit({
     return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
            req.connection?.remoteAddress ||
            req.socket?.remoteAddress ||
-           req.ip ||
            '0.0.0.0';
   }
 });

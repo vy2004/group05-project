@@ -81,7 +81,24 @@ const taoDuLieuMau = async () => {
       const existingUser = await User.findOne({ email: userData.email });
       
       if (existingUser) {
-        console.log(`👤 Đã có ${userData.role}:`, userData.email);
+        // Kiểm tra nếu user cũ thiếu password, thì xóa và tạo lại
+        if (!existingUser.password) {
+          console.log(`🔄 User ${userData.role} thiếu password, xóa và tạo lại...`);
+          await User.deleteOne({ _id: existingUser._id });
+          // Tạo lại user mới với password
+          const hashedPassword = await bcrypt.hash(userData.password, salt);
+          const user = new User({
+            ...userData,
+            password: hashedPassword
+          });
+          await user.save();
+          console.log(`✅ Đã tạo lại ${userData.role} thành công:`);
+          console.log(`   📧 Email: ${userData.email}`);
+          console.log(`   🔑 Password: ${userData.password}`);
+          console.log(`   ${userData.role === 'admin' ? '👑' : userData.role === 'moderator' ? '🛡️' : '👤'} Role: ${userData.role}`);
+        } else {
+          console.log(`👤 Đã có ${userData.role}:`, userData.email);
+        }
       } else {
         // Mã hóa mật khẩu
         const hashedPassword = await bcrypt.hash(userData.password, salt);
