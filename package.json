@@ -1,4 +1,11 @@
 {
+  "name": "group05-project",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend && npm install"
+  },
   "dependencies": {
     "cors": "^2.8.5"
   }
