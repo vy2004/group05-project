@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: backend
+    name: group05-project
     rootDir: backend
     env: node
     buildCommand: npm install
