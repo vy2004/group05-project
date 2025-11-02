@@ -24,7 +24,6 @@
     "express": "^5.1.0",
     "express-rate-limit": "^7.1.5",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^8.0.0",
     "mongoose": "^8.19.1",
     "multer": "^2.0.2",
     "nodemailer": "^6.9.4",
