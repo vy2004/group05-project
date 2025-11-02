@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000",
   headers: { "Content-Type": "application/json" },
   timeout: 30000,
 });
@@ -75,7 +75,7 @@ api.interceptors.response.use(
         console.log('🔄 Access token expired, refreshing...');
         
         // Gọi API refresh (không dùng interceptor để tránh loop)
-        const response = await axios.post('http://localhost:3000/auth/refresh', {
+        const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/auth/refresh`, {
           refreshToken
         });
 
