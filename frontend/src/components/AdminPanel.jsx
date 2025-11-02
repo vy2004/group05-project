@@ -95,9 +95,10 @@ const AdminPanel = ({ showMenu, setShowMenu, setCurrentView, setProfileKey, hand
     }
   };
 
-  const dinhDangNgay = (dateString) => {
-    return new Date(dateString).toLocaleString('vi-VN');
-  };
+  // Format date function (có thể dùng sau)
+  // const dinhDangNgay = (dateString) => {
+  //   return new Date(dateString).toLocaleString('vi-VN');
+  // };
 
   const layMauRole = (role) => {
     if (role === 'admin') return 'role-admin';
@@ -198,6 +199,30 @@ const AdminPanel = ({ showMenu, setShowMenu, setCurrentView, setProfileKey, hand
                   onMouseLeave={(e) => e.target.style.background = 'white'}
                 >
                   {currentUser?.role === 'admin' ? '🔧' : '🛡️'} {currentUser?.role === 'admin' ? 'Quản Lý Phân Quyền' : 'Quản Lý Phân Quyền'}
+                </button>
+              )}
+              {currentUser?.role === 'admin' && (
+                <button 
+                  onClick={() => {
+                    setCurrentView('logs');
+                    setShowMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: 'white',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
+                  onMouseLeave={(e) => e.target.style.background = 'white'}
+                >
+                  📊 Xem Log
                 </button>
               )}
               <button 

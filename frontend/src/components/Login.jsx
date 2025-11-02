@@ -1,37 +1,32 @@
 import { useState } from 'react';
-import api from '../services/api';
+import { useAppDispatch, useAppSelector } from '../store/hooks'; // SV2: Redux hooks
+import { loginUser } from '../store/thunks/authThunks'; // SV2: Redux thunk
 
 export default function Login({ onLogin, onForgotPassword }) {
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useAppSelector((state) => state.auth); // SV2: Get loading và error từ Redux
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
-      const { accessToken, refreshToken, user } = res.data;
+      // SV2: Sử dụng Redux thunk để login
+      const result = await dispatch(loginUser({ email, password }));
       
-      if (accessToken && refreshToken && user) {
-        // ✅ Lưu cả access token và refresh token
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
-        localStorage.setItem('current_user', JSON.stringify(user));
-        
-        // ✅ Set access token vào axios headers
-        api.setAuthToken(accessToken);
-        
-        console.log('✅ Login successful with refresh token');
+      if (loginUser.fulfilled.match(result)) {
+        const { user } = result.payload;
+        console.log('✅ Login successful with Redux');
         alert('Đăng nhập thành công!');
-        if (onLogin) onLogin({ token: accessToken, user });
+        if (onLogin) onLogin({ token: result.payload.accessToken, user });
       } else {
-        alert('Không nhận được token hoặc thông tin user từ server');
+        // Error đã được xử lý trong thunk
+        alert(error || 'Đăng nhập thất bại');
       }
     } catch (err) {
       console.error('Login failed', err);
-      alert(err?.response?.data?.message || 'Đăng nhập thất bại');
-    } finally { setLoading(false); }
+      alert(err?.message || 'Đăng nhập thất bại');
+    }
   };
 
   return (
@@ -65,7 +60,8 @@ export default function Login({ onLogin, onForgotPassword }) {
         />
       </div>
       <button
-        disabled={loading}
+        type="submit"
+        disabled={isLoading}
         style={{
           width: '100%',
           padding: '10px',
@@ -73,13 +69,18 @@ export default function Login({ onLogin, onForgotPassword }) {
           color: 'white',
           border: 'none',
           borderRadius: '4px',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          opacity: loading ? 0.7 : 1
+          cursor: isLoading ? 'not-allowed' : 'pointer',
+          opacity: isLoading ? 0.7 : 1
         }}
       >
-        {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+        {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
       </button>
-      {!loading && (
+      {error && (
+        <div style={{ color: 'red', marginTop: '10px', fontSize: '14px', textAlign: 'center' }}>
+          {error}
+        </div>
+      )}
+      {!isLoading && (
         <div style={{ marginTop: 12, textAlign: 'center', color: '#6c757d', fontSize: '0.9em' }}>
           <div>Vui lòng đăng nhập để tiếp tục.</div>
           {onForgotPassword && (
